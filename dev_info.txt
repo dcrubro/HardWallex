@@ -1,0 +1,4 @@
+Build ID Format:
+2 year digits + Build no. for that year
+ - Example:
+    Build no. 11 in year 2024: "2411"

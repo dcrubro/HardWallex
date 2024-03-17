@@ -1,0 +1,17 @@
+{
+    "appId": "com.dcrubro.hardwallex",
+    "productName": "HardWallex",
+    "directories": {
+        "output": "build"
+    },
+    "files": [
+        "dist/**",
+        "node_modules/**/*",
+        "html/**",
+        "wallets/**",
+        "css/**"
+    ],
+    "win": {
+        "target": "nsis"
+    }
+}
