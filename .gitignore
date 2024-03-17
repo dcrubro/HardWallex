@@ -126,8 +126,8 @@ out
 .pnp.*
 
 #HardWallex data
-dist/**
-wallets/**
-exports/**
+dist/*
+wallets/*
+exports/*
 
 build/
