@@ -44,6 +44,15 @@ const Ethers = __importStar(require("ethers"));
 const sepoliaProvider = new Ethers.JsonRpcProvider("https://rpc2.sepolia.org/");
 const upperEthGasLimit = 0.00042;
 let selectedCurrency;
+function readFile(filePath) {
+    if (fs.existsSync(filePath)) {
+        return fs.readFileSync(`${filePath}`).toString();
+    }
+    else {
+        console.error("Error: Destination folder does not exist.");
+        return;
+    }
+}
 function updateConfirmModalData() {
     //@ts-expect-error
     let sendingTo = document.getElementById("destination-address").value;
@@ -55,15 +64,6 @@ function updateConfirmModalData() {
     document.getElementById("sending-to-text").textContent = `Sending to: ${sendingTo}`;
     //@ts-expect-error
     document.getElementById("sending-amount-text").textContent = `Send amount: ${sendingAmount}`;
-}
-function readFile(filePath) {
-    if (fs.existsSync(filePath)) {
-        return fs.readFileSync(`${filePath}`).toString();
-    }
-    else {
-        console.error("Error: Destination folder does not exist.");
-        return;
-    }
 }
 function setCurrency(currency) {
     selectedCurrency = currency;

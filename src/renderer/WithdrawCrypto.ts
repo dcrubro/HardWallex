@@ -12,6 +12,15 @@ const upperEthGasLimit: number = 0.00042;
 
 let selectedCurrency: string;
 
+function readFile(filePath: string): any {
+    if (fs.existsSync(filePath)) {
+        return fs.readFileSync(`${filePath}`).toString();
+    } else {
+        console.error("Error: Destination folder does not exist.");
+        return;
+    }
+}
+
 function updateConfirmModalData() {
     //@ts-expect-error
     let sendingTo: string = document.getElementById("destination-address").value;
@@ -24,15 +33,6 @@ function updateConfirmModalData() {
     document.getElementById("sending-to-text").textContent = `Sending to: ${sendingTo}`;
     //@ts-expect-error
     document.getElementById("sending-amount-text").textContent = `Send amount: ${sendingAmount}`;
-}
-
-function readFile(filePath: string): any {
-    if (fs.existsSync(filePath)) {
-        return fs.readFileSync(`${filePath}`).toString();
-    } else {
-        console.error("Error: Destination folder does not exist.");
-        return;
-    }
 }
 
 function setCurrency(currency: string) {
