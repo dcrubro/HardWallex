@@ -116,7 +116,6 @@ function confirmSendCrypto() {
             if (selectedCurrency === "Sepolia Ethereum") {
                 let encryptedPriv = readFile(path_1.default.join(__dirname + "/../wallets/eth_private.key"));
                 let decryptedPriv = crypto_js_1.default.enc.Utf8.stringify(crypto_js_1.default.AES.decrypt(encryptedPriv.replace(" (ENCRYPTED)", ""), enteredPassword));
-                console.log(decryptedPriv);
                 //@ts-expect-error
                 let adjustedForGas = parseFloat(document.getElementById("send-amount").value.toString()) - upperEthGasLimit;
                 //Ethers.js snippet for transaction creation
