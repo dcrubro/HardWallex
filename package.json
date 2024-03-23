@@ -5,7 +5,9 @@
   "main": "./dist/index.js",
   "scripts": {
     "build": "tsc",
-    "start": "npm run build && electron ."
+    "start": "npm run build && electron .",
+    "build-linux": "npx electron-builder -l",
+    "build-win": "npx electron-builder -w"
   },
   "keywords": [],
   "author": "DcruBro",
@@ -16,13 +18,14 @@
     "crypto": "^1.0.1",
     "crypto-js": "^4.2.0",
     "ethers": "^6.11.1",
+    "fs": "^0.0.1-security",
     "typescript": "^5.3.3"
   },
   "devDependencies": {
     "@types/bootstrap": "^5.2.10",
     "@types/crypto-js": "^4.2.2",
-    "electron": "^29.1.0",
-    "electron-builder": "^24.13.3",
-    "@types/electron": "^1.6.10"
+    "@types/electron": "^1.6.10",
+    "electron": "^29.1.5",
+    "electron-builder": "^24.13.3"
   }
 }
