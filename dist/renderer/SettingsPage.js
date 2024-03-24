@@ -114,6 +114,14 @@ function confirmDeleteWallet() {
     //@ts-expect-error
     let enteredPassword = document.getElementById("password-text-delete-wallet").value;
     let hashedPassword = readFile(path.join(__dirname + "/../wallets/hashed_password.txt"));
+    if (hashedPassword === null) {
+        //@ts-expect-error
+        document.getElementById("feedback-text-delete-wallet").textContent = "No wallet data found! It has most likely already been deleted!";
+        //@ts-expect-error
+        document.getElementById("feedback-text-delete-wallet").style.color = "red";
+        //@ts-expect-error
+        document.getElementById("feedback-text-delete-wallet").style.display = "block";
+    }
     if (crypto_js_1.default.SHA256(enteredPassword).toString() === hashedPassword) {
         try {
             fs.rmSync(path.join(__dirname + "/../wallets/"), { recursive: true });
