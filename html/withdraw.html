@@ -60,7 +60,9 @@
                 </button>
                 <ul class="dropdown-menu" aria-labelledby="cryptoDropdownMenuButton">
                   <li><a class="dropdown-item" href="#" onclick="setCurrency('Ethereum')">Ethereum</a></li>
-                  <li><a class="dropdown-item" href="#" onclick="setCurrency('Sepolia Ethereum')">Sepolia Ethereum</a></li>
+
+                  <!--Uncomment to re-enable Sepolia Testnet-->
+                  <!--li><a class="dropdown-item" href="#" onclick="setCurrency('Sepolia Ethereum')">Sepolia Ethereum</a></li-->
                 </ul>
               </div>
 
@@ -80,7 +82,7 @@
               </div>
 
               <br />
-              <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#sendConfirmModal" id="updateConfirmModalData">
+              <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#sendConfirmModal" id="updateConfirmModalData" onclick="updateConfirmModalData()">
                 Finalize
               </button>
 
@@ -113,6 +115,9 @@
                   <input class="form-control" type="password" id="password-text"></input>
                 </div>
                 <p style="color: red; display: none;" id="feedback-text">FEEDBACK TEXT</p>
+                <br />
+                <i>Note: If you don't see a window pop-up with the transaction details on etherscan, the transaction didn't go through either 
+                  because of lack of funds or an internal error.</i>
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

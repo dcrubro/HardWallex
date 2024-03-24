@@ -81,9 +81,29 @@ function confirmSendCrypto() {
         let destinationAddress = document.getElementById("destination-address").value;
         //@ts-expect-error
         let sendAmount = document.getElementById("send-amount").value;
-        if (destinationAddress === "" || sendAmount == "") {
+        if (selectedCurrency === "" || selectedCurrency === "None") {
+            //@ts-expect-error
+            document.getElementById("feedback-text").textContent = "Please select a currency.";
+            //@ts-expect-error
+            document.getElementById("feedback-text").style.color = "red";
+            //@ts-expect-error
+            document.getElementById("feedback-text").style.display = "block";
+            enteredPassword = "";
+            return;
+        }
+        else if (destinationAddress === "" || sendAmount == "") {
             //@ts-expect-error
             document.getElementById("feedback-text").textContent = "Empty destination address or send amount.";
+            //@ts-expect-error
+            document.getElementById("feedback-text").style.color = "red";
+            //@ts-expect-error
+            document.getElementById("feedback-text").style.display = "block";
+            enteredPassword = "";
+            return;
+        }
+        else if (isNaN(parseFloat(sendAmount)) || parseFloat(sendAmount) === 0) {
+            //@ts-expect-error
+            document.getElementById("feedback-text").textContent = "Invalid send amount (Check that it's a real number or non-zero)";
             //@ts-expect-error
             document.getElementById("feedback-text").style.color = "red";
             //@ts-expect-error
