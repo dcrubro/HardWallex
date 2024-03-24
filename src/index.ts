@@ -2,10 +2,11 @@
 //Written by DcruBro @ https://dcrubro.com/
 import { app, ipcMain, BrowserWindow } from "electron";
 
-process.env.NODE_ENV = "development"; //Set this to "production" for prod. build
+process.env.NODE_ENV = "production"; //Set this to "production" for prod. build and "development" for dev mode
 
 let mainWindow: BrowserWindow;
 
+const isMacPlatform: boolean = process.platform === 'darwin';
 const isDevMode: boolean = process.env.NODE_ENV !== "production";
 
 app.on("ready", createWindows);
@@ -40,3 +41,9 @@ function createWindows(): void {
 
     mainWindow.reload(); //Force a reload so the ethPrice localStorage variable is up-to-date
 }
+
+app.on('window-all-closed', () => {
+    if (!isMacPlatform) {
+        app.quit();
+    }
+});

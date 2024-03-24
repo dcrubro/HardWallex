@@ -11,8 +11,9 @@
   },
   "keywords": [],
   "author": "DcruBro",
-  "license": "ISC",
+  "license": "MPL-2.0",
   "dependencies": {
+    "@popperjs/core": "^2.11.8",
     "bip39": "^3.1.0",
     "bootstrap": "^5.3.3",
     "crypto": "^1.0.1",

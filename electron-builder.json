@@ -2,7 +2,7 @@
     "appId": "com.dcrubro.hardwallex",
     "productName": "HardWallex",
     "directories": {
-        "output": "build"
+      "output": "build"
     },
     "files": [
         "dist/**",
@@ -12,7 +12,12 @@
         "wallets/",
         "css/**"
     ],
+    "asar": false,
+    "mac": {
+      "target": "dmg"
+    },
     "win": {
-        "target": "nsis"
+      "target": "nsis"
     }
 }
+  

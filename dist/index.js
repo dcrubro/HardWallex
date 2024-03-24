@@ -3,8 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 //index.ts
 //Written by DcruBro @ https://dcrubro.com/
 const electron_1 = require("electron");
-process.env.NODE_ENV = "development"; //Set this to "production" for prod. build
+process.env.NODE_ENV = "production"; //Set this to "production" for prod. build and "development" for dev mode
 let mainWindow;
+const isMacPlatform = process.platform === 'darwin';
 const isDevMode = process.env.NODE_ENV !== "production";
 electron_1.app.on("ready", createWindows);
 function createWindows() {
@@ -34,3 +35,8 @@ function createWindows() {
     mainWindow.webContents.executeJavaScript(`localStorage.setItem("ethAddress", "")`, true);
     mainWindow.reload(); //Force a reload so the ethPrice localStorage variable is up-to-date
 }
+electron_1.app.on('window-all-closed', () => {
+    if (!isMacPlatform) {
+        electron_1.app.quit();
+    }
+});
