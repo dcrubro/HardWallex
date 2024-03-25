@@ -8,7 +8,7 @@
             integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" 
             crossorigin="anonymous">
         <link href="../css/index.css" rel="stylesheet">
-        <title>HardWallex - Wallet Creation</title>
+        <title>HardWallex - Wallet Import</title>
     </head>
     <body>
         <!--Sidebar (COPY TO ALL PAGES)-->
@@ -48,41 +48,38 @@
 
         <!--Panels-->
         <div class="component-panel text-white">
-          <h3>Wallet Creation</h3>
+          <h3>Wallet Import</h3>
           <br />
           <div class="card">
             <div class="card-body">
-              <h5 class="card-title">Create a New Wallet</h5>
+              <h5 class="card-title">Import an Existing Wallet</h5>
               <p class="card-text">
-                This page will create a new wallet for you. <strong>Before clicking
-                  "Get Wallet Info", make sure that you're not showing this to anyone else!
-                </strong>
+                This page will import an existing wallet for you.
+                <strong>Make sure that you're not showing this to anyone else!</strong>
               </p>
-              <a href="#" class="btn btn-primary" onclick="getWalletInfo()">Get Wallet Info</a>
-            </div>
-          </div>
-          <br />
-          <div class="card" id="walletInfoDiv" style="display: none;">
-            <div class="card-body">
-              <h5 class="card-title">Mnemonic Phrase</h5>
-              <p class="card-text" id="mnemonicLine1">
-                Querying, please be patient...
-              </p>
-              <p class="card-text" id="mnemonicLine2">
-                Querying, please be patient...
-              </p>
+              
+              <br />
+
+              <div class="mb-3">
+                <h5 class="card-title">Mnemonic Phrase:</h5>
+                <input class="form-control" type="text" id="mnemonic-phrase-text"></input>
+              </div>
               <p class="card-text">
                 <strong>Save this phrase, since you will need it in case of data loss!</strong>
               </p>
-              <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#creationConfirmModal">
+              <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#importConfirmModal">
                 Finalize
               </button>
             </div>
           </div>
+          <br />
+          <div class="card-body">
+            
+          </div>
         </div>
 
         <!--Creation Confirm Modal-->
-        <div class="modal fade" id="creationConfirmModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal fade" id="importConfirmModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
           <div class="modal-dialog">
             <div class="modal-content">
               <div class="modal-header">
@@ -100,12 +97,13 @@
                   <input class="form-control" type="password" id="password-confirm-text"></input>
                 </div>
                 <p style="color: red; display: none;" id="feedback-text">FEEDBACK TEXT</p>
-                <p>By clicking "Confirm Creation" you agree that the creator of this software is not responsible to any losing of funds or otherwise damaging things.</p>
+                <p>By clicking "Confirm Import" you agree that the creator of this software is not responsible to any losing of funds or otherwise damaging things.</p>
                 <p>If you lost your USB drive, you can restore the wallet via the mnemonic phrase. If you didn't back it up, that is entirely your fault.</p>
+                <strong>Important note: This WILL WIPE the entire wallet and make a new one from scratch! Back up your wallet!</strong>
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="confirmCreateWallet()">Confirm Creation</button>
+                <button type="button" class="btn btn-primary" onclick="confirmImportWallet()">Confirm Import</button>
               </div>
             </div>
           </div>
