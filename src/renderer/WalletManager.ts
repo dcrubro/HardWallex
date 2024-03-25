@@ -103,6 +103,7 @@ async function checkWalletExistance() {
     }
 }
 
+function goToImportWallet() { window.location.href = "./walletimport.html"; }
 function goToCreateWallet() { window.location.href = "./walletcreation.html"; }
 
 checkWalletExistance();

@@ -100,3 +100,58 @@ function confirmCreateWallet() {
         }
     }
 }
+
+function confirmImportWallet() {
+    //@ts-expect-error
+    let enteredPassword: string = document.getElementById("password-text").value;
+    //@ts-expect-error
+    let enteredConfirmPassword: string = document.getElementById("password-confirm-text").value;
+
+    if (/\s/.test(enteredPassword) || enteredPassword === "") {
+        //Invalid password
+        //@ts-expect-error
+        document.getElementById("feedback-text").textContent = "The password is invalid.";
+        //@ts-expect-error
+        document.getElementById("feedback-text").style.color = "red";
+        //@ts-expect-error
+        document.getElementById("feedback-text").style.display = "block";
+    } else {
+        //Valid password
+        if (enteredPassword !== enteredConfirmPassword) {
+            //Passwords do not match
+            //@ts-expect-error
+            document.getElementById("feedback-text").textContent = "Passwords do not match.";
+            //@ts-expect-error
+            document.getElementById("feedback-text").style.color = "red";
+            //@ts-expect-error
+            document.getElementById("feedback-text").style.display = "block";
+        } else {
+            //@ts-expect-error
+            let readMnemonic: string = document.getElementById("mnemonic-phrase-text").value;
+
+            //All validities passed
+            let data = generateETHWallet(readMnemonic);
+            
+            //Encrypt secret data
+            let hashedPassword: string = CryptoJS.SHA256(enteredPassword).toString();
+            let encryptedMnemonic: string = `${CryptoJS.AES.encrypt(mnemonic, enteredPassword)} (ENCRYPTED)`;
+            let encryptedPrivateKey: string = `${CryptoJS.AES.encrypt(data.private, enteredPassword)} (ENCRYPTED)`;
+
+            writeFile(path.join(__dirname + "/../wallets/"), "eth_address.pem", data.address);
+            writeFile(path.join(__dirname + "/../wallets/"), "eth_private.key", encryptedPrivateKey);
+            writeFile(path.join(__dirname + "/../wallets/"), "hashed_password.txt", hashedPassword);
+            writeFile(path.join(__dirname + "/../wallets/"), "mnemonic.txt", encryptedMnemonic);
+
+            //@ts-expect-error
+            document.getElementById("feedback-text").textContent = "Wallet import successful!";
+            //@ts-expect-error
+            document.getElementById("feedback-text").style.color = "green";
+            //@ts-expect-error
+            document.getElementById("feedback-text").style.display = "block";
+            
+            setTimeout(function() {
+                window.location.href = "./wallets.html";
+            }, 1000);
+        }
+    }
+}
