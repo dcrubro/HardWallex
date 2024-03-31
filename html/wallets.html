@@ -51,17 +51,44 @@
           <h3>Wallets</h3>
           <br />
           <div class="card">
-            <div class="card-body">
-              <h5 class="card-title">Ethereum Wallet</h5>
-              <p class="card-text" id="ethWalletAddress">
-                Wallet Address: 
-              </p>
-              <p class="card-text" id="ethWalletBalance">
-                ETH Balance: 
-              </p>
-              <p class="card-text" id="ethWalletBalanceValue">
-                USD Value: 
-              </p>
+            <div class="card-body row">
+              <div class="col-md-8">
+                <h5 class="card-title">Bitcoin Wallet</h5>
+                <p class="card-text" id="btcWalletAddress">
+                  Wallet Address: 
+                </p>
+                <p class="card-text" id="btcWalletBalance">
+                  BTC Balance: 
+                </p>
+                <p class="card-text" id="btcWalletBalanceValue">
+                  USD Value: 
+                </p>
+              </div>
+              <div class="col-md-4 d-flex align-items-center justify-content-end">
+                <canvas id="btc-address-qrcode" style="max-width:100%;"></canvas>
+              </div>
+            </div>
+          </div>
+          
+          <br />
+
+          <div class="card">
+            <div class="card-body row">
+              <div class="col-md-8">
+                <h5 class="card-title">Ethereum Wallet</h5>
+                <p class="card-text" id="ethWalletAddress">
+                  Wallet Address: 
+                </p>
+                <p class="card-text" id="ethWalletBalance">
+                  ETH Balance: 
+                </p>
+                <p class="card-text" id="ethWalletBalanceValue">
+                  USD Value: 
+                </p>
+              </div>
+              <div class="col-md-4 d-flex align-items-center justify-content-end">
+                <canvas id="eth-address-qrcode" style="max-width:100%;"></canvas>
+              </div>
             </div>
           </div>
           <br />

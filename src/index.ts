@@ -1,6 +1,7 @@
 //index.ts
 //Written by DcruBro @ https://dcrubro.com/
 import { app, ipcMain, BrowserWindow } from "electron";
+import * as path from "path";
 
 process.env.NODE_ENV = "production"; //Set this to "production" for prod. build and "development" for dev mode
 
@@ -25,6 +26,7 @@ function createWindows(): void {
             webSecurity: true,
             devTools: isDevMode ? true : false
         },
+        icon: path.join(__dirname + "icon.ico"),
         show: false,
         resizable: false,
     });
@@ -35,8 +37,11 @@ function createWindows(): void {
     mainWindow.webContents.executeJavaScript(`localStorage.setItem("etherscanAPIkey", "41EJZUY9SEWICJFJPM7FD4M8YZNSWF1JYM")`, true);
     mainWindow.webContents.executeJavaScript(`localStorage.setItem("etherscanBaseUrl", "https://api.etherscan.io/api")`, true);
     mainWindow.webContents.executeJavaScript(`localStorage.setItem("sepEtherscanBaseUrl", "https://api-sepolia.etherscan.io/api")`, true);
+    mainWindow.webContents.executeJavaScript(`localStorage.setItem("bitcoinexplorerBaseUrl", "https://bitcoinexplorer.org")`, true);
+    mainWindow.webContents.executeJavaScript(`localStorage.setItem("testnetBitcoinexplorerBaseUrl", "https://blockstream.info/testnet/api")`, true);
     mainWindow.webContents.executeJavaScript(`localStorage.setItem("coinGeckoEthQueryUrl", "https://api.coingecko.com/api/v3/simple")`, true);
     mainWindow.webContents.executeJavaScript(`localStorage.setItem("ethPrice", 0)`, true);
+    mainWindow.webContents.executeJavaScript(`localStorage.setItem("btcPrice", 0)`, true);
     mainWindow.webContents.executeJavaScript(`localStorage.setItem("ethAddress", "")`, true);
 
     mainWindow.reload(); //Force a reload so the ethPrice localStorage variable is up-to-date
