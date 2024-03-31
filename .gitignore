@@ -127,6 +127,7 @@ out
 
 #HardWallex data
 wallets/**
+testwallets/**
 exports/**
 
 build/

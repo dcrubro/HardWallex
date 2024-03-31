@@ -59,6 +59,7 @@
                   Select Crypto
                 </button>
                 <ul class="dropdown-menu" aria-labelledby="cryptoDropdownMenuButton">
+                  <li><a class="dropdown-item" href="#" onclick="setCurrency('Bitcoin')">Bitcoin</a></li>
                   <li><a class="dropdown-item" href="#" onclick="setCurrency('Ethereum')">Ethereum</a></li>
 
                   <!--Uncomment to re-enable Sepolia Testnet-->
@@ -116,8 +117,13 @@
                 </div>
                 <p style="color: red; display: none;" id="feedback-text">FEEDBACK TEXT</p>
                 <br />
-                <i>Note: If you don't see a window pop-up with the transaction details on etherscan, the transaction didn't go through either 
-                  because of lack of funds or an internal error.</i>
+                <i>
+                  Note: If you don't see a window pop-up with the transaction details on the blockchain explorer, the transaction didn't go through either 
+                  because of lack of funds or an internal error.
+                </i>
+                <br />
+                <br />
+                <b>This action is irreversable.</b>
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

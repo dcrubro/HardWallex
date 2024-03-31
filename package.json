@@ -1,28 +1,37 @@
 {
   "name": "hardwallex",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "",
   "main": "./dist/index.js",
   "scripts": {
     "build": "tsc",
     "start": "npm run build && electron .",
     "build-linux": "npx electron-builder -l",
-    "build-win": "npx electron-builder -w"
+    "build-win": "npx electron-builder -w",
+    "build-mac": "npx electron-builder -m"
   },
   "keywords": [],
   "author": "DcruBro",
   "license": "MPL-2.0",
   "dependencies": {
     "@popperjs/core": "^2.11.8",
+    "axios": "^1.6.8",
+    "bip32": "^4.0.0",
     "bip39": "^3.1.0",
+    "bitcoinjs-lib": "^6.1.5",
+    "bitcore-lib": "^10.0.28",
     "bootstrap": "^5.3.3",
     "crypto": "^1.0.1",
     "crypto-js": "^4.2.0",
+    "ecpair": "^2.1.0",
     "ethers": "^6.11.1",
     "fs": "^0.0.1-security",
+    "qrcode": "^1.5.3",
+    "tiny-secp256k1": "^2.2.3",
     "typescript": "^5.3.3"
   },
   "devDependencies": {
+    "@types/bitcore-lib": "^0.15.6",
     "@types/bootstrap": "^5.2.10",
     "@types/crypto-js": "^4.2.2",
     "@types/electron": "^1.6.10",

@@ -6,6 +6,11 @@ import path from "path";
 import CryptoJS from "crypto-js";
 import * as Ethers from "ethers";
 import * as BIP39 from "bip39";
+import * as BIP32 from "bip32";
+import * as BitcoinJS from "bitcoinjs-lib";
+import * as ECPair from "ecpair";
+import * as Bitcore from "bitcore-lib";
+import * as ecc from "tiny-secp256k1";
 
 const sepoliaProvider: any = new Ethers.JsonRpcProvider("https://rpc2.sepolia.org/");
 const upperEthGasLimit: number = 0.00042;
@@ -27,22 +32,36 @@ function updateConfirmModalData() {
     //@ts-expect-error
     let sendingAmount: string = document.getElementById("send-amount").value;
 
-    //@ts-expect-error
+    
     document.getElementById("currency-text").textContent = `Currency: ${selectedCurrency}`;
-    //@ts-expect-error
+    
     document.getElementById("sending-to-text").textContent = `Sending to: ${sendingTo}`;
-    //@ts-expect-error
+    
     document.getElementById("sending-amount-text").textContent = `Send amount: ${sendingAmount}`;
 }
 
 function setCurrency(currency: string) {
     selectedCurrency = currency;
-    //@ts-expect-error
+    
     document.getElementById("selected-currency-text").textContent = `Selected currency: ${selectedCurrency}`;
 }
 
+async function fetchBTCTransactionHex(txId: string) {
+    const url = `https://api.blockcypher.com/v1/btc/main/txs/${txId}?includeHex=true`;
+    
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        // The raw transaction hex is returned in the 'hex' field.
+        return data.hex; // Ensure this matches the actual response structure from BlockCypher.
+    } catch (error) {
+        console.error("Failed to fetch transaction hex from BlockCypher:", error);
+        return null;
+    }
+}
+
 async function confirmSendCrypto() {
-    //@ts-expect-error
+    
     document.getElementById("feedback-text").style.display = "none";
 
     //@ts-expect-error
@@ -55,31 +74,31 @@ async function confirmSendCrypto() {
     let sendAmount: string = document.getElementById("send-amount").value;
 
     if (selectedCurrency === "" || selectedCurrency === "None") {
-        //@ts-expect-error
+        
         document.getElementById("feedback-text").textContent = "Please select a currency.";
-        //@ts-expect-error
+        
         document.getElementById("feedback-text").style.color = "red";
-        //@ts-expect-error
+        
         document.getElementById("feedback-text").style.display = "block";
 
         enteredPassword = "";
         return;
     } else if (destinationAddress === "" || sendAmount == "") {
-        //@ts-expect-error
+        
         document.getElementById("feedback-text").textContent = "Empty destination address or send amount.";
-        //@ts-expect-error
+        
         document.getElementById("feedback-text").style.color = "red";
-        //@ts-expect-error
+        
         document.getElementById("feedback-text").style.display = "block";
 
         enteredPassword = "";
         return;
     } else if (isNaN(parseFloat(sendAmount)) || parseFloat(sendAmount) === 0) {
-        //@ts-expect-error
+        
         document.getElementById("feedback-text").textContent = "Invalid send amount (Check that it's a real number or non-zero)";
-        //@ts-expect-error
+        
         document.getElementById("feedback-text").style.color = "red";
-        //@ts-expect-error
+        
         document.getElementById("feedback-text").style.display = "block";
 
         enteredPassword = "";
@@ -141,13 +160,137 @@ async function confirmSendCrypto() {
             //Open the Etherscan window
             window.open(`https://sepolia.etherscan.io/tx/${signedTX.hash}`);
         }
+
+        if (selectedCurrency === "Bitcoin") {
+            let encryptedWIF: string = readFile(path.join(__dirname + "/../wallets/btc_private.key"));
+            let decryptedWIF: string = CryptoJS.enc.Utf8.stringify(CryptoJS.AES.decrypt(encryptedWIF.replace(" (ENCRYPTED)", ""), enteredPassword));
+
+            let sourceAddress: string = readFile(path.join(__dirname + "/../wallets/btc_address.pem"));
+            
+            //let insight = new BitcoreExplorers.Insight("testnet");
+
+            const NETWORK = BitcoinJS.networks.bitcoin;
+
+            //Get the UTXOs
+            let utxos = []
+            let totalAmountAvailable: number = 0; //Total amount available in Satoshi
+
+            {
+                const url = `https://api.blockcypher.com/v1/btc/main/addrs/${sourceAddress}?unspentOnly=true`;
+
+                try {
+                    const response = await fetch(url);
+                    const data = await response.json();
+
+                    totalAmountAvailable = data.balance;
+                    utxos = data.txrefs || [];
+                } catch (err) {
+                    console.error("Failed to fetch UTXOs: ", err);
+                    utxos = [];
+
+                    return;
+                }
+            }
+
+            //Construct and send the transaction
+            {
+                if (utxos.length === 0) {
+                    console.log("No UTXOs available to spend.");
+                    return;
+                }
+
+                const psbt = new BitcoinJS.Psbt({ network: NETWORK });
+
+                for (const utxo of utxos) {
+                    const txHex = await fetchBTCTransactionHex(utxo.tx_hash);
+                    if (!txHex) {
+                        console.log(`Could not fetch transaction hex for UTXO ${utxo.tx_hash}`);
+                        return;
+                    }
+
+                    psbt.addInput({
+                        hash: utxo.tx_hash,
+                        index: utxo.tx_output_n,
+                        nonWitnessUtxo: Buffer.from(txHex, 'hex'),
+                    });
+                }
+
+
+                const feeRate = 15; //NOTE: This will need improving (See 3. point in TODO.txt)
+                const estimatedTxSize = 10 + utxos.length * 148 + 2 * 34 + 10; //2 outputs: actual recipient + change address (sender address)
+                const transactionFee = feeRate * estimatedTxSize; //Transaction fee is in Satoshi
+
+                if (totalAmountAvailable < (parseFloat(sendAmount) * 100000000)) {
+                    
+                    document.getElementById("feedback-text").textContent = "Not enough funds to send transaction.";
+                    
+                    document.getElementById("feedback-text").style.color = "red";
+                    
+                    document.getElementById("feedback-text").style.display = "block";
+
+                    console.log("Not enough funds to send transaction.");
+                    return;
+                }
+
+                //@ts-expect-error
+                const recipientAddress: string = document.getElementById("destination-address").value.toString();
+
+                //Add the recipient output
+                psbt.addOutput({
+                    address: recipientAddress,
+                    value: (parseFloat(sendAmount) * 100000000) - transactionFee,
+                });
+
+                //Calculate and add the change output back to the sneder's address
+                const change: number = totalAmountAvailable - parseFloat(sendAmount) * 100000000 - transactionFee;
+                if (change > 0) {
+                    psbt.addOutput({
+                        address: sourceAddress,
+                        value: change,
+                    });
+                }
+
+                //Create a temporary keypair using WIF
+                let keyPair = ECPair.ECPairFactory(ecc).fromWIF(decryptedWIF, BitcoinJS.networks.bitcoin);
+                
+                psbt.signAllInputs(keyPair);
+
+                psbt.finalizeAllInputs();
+
+                const tx = psbt.extractTransaction();
+
+                //Send the transaction
+                const url = 'https://api.blockcypher.com/v1/btc/main/txs/push';
+                const data = {
+                    tx: tx.toHex(),
+                };
+
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(data),
+                    });
+                    const responseData = await response.json();
+
+                    //Open the BlockCypher window
+                    window.open(`https://live.blockcypher.com/btc/tx/${responseData.tx.hash}`);
+
+                    console.log(responseData);
+                } catch (error) {
+                    console.error('Error broadcasting transaction:', error);
+                }
+            }
+        }
     } else {
         //Passwords do not match
-        //@ts-expect-error
+        
         document.getElementById("feedback-text").textContent = "Incorrect password.";
-        //@ts-expect-error
+        
         document.getElementById("feedback-text").style.color = "red";
-        //@ts-expect-error
+        
         document.getElementById("feedback-text").style.display = "block";
     }
 

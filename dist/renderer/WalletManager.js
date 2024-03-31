@@ -1,6 +1,29 @@
 "use strict";
 //WalletManager.ts
 //Written by DcruBro @ https://dcrubro.com/
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -17,8 +40,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const bootstrap_1 = require("bootstrap");
+const QRCode = __importStar(require("qrcode"));
 let ethBalance;
 let sepEthBalance;
+let btcBalance;
 //Functions segment
 function getETHWalletBalance(address) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -64,6 +89,42 @@ function getSepETHWalletBalance(address) {
         }
     });
 }
+function getBTCWalletBalance(address) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const url = `${localStorage.getItem("bitcoinexplorerBaseUrl")}/api/address/${address}`;
+        let balance = 0;
+        try {
+            const headers = {
+                "Content-Type": "application/json"
+            };
+            // Send the HTTP request
+            yield fetch(url, { method: 'GET', headers: headers })
+                .then(response => response.json())
+                .then(data => {
+                if (data) {
+                    if (data.txHistory.balanceSat) {
+                        balance = data.txHistory.balanceSat / (10 ** 8); //adjust for blockchain.com's display method;
+                    }
+                    else {
+                        balance = 0;
+                    }
+                }
+                else {
+                    console.log("Error occurred while fetching balance. Please check the Bitcoin address or try again later.");
+                }
+            })
+                .catch(error => {
+                console.error("Error occurred:", error);
+                console.log("Error occurred while fetching balance. Please check the Bitcoin address or try again later.");
+            });
+        }
+        catch (error) {
+            console.log("Error occurred while fetching balance. Please check the Bitcoin address or try again later.");
+            throw error;
+        }
+        return balance;
+    });
+}
 function getUSDValue(ownedAmount, currencyValue) {
     return ownedAmount * currencyValue;
 }
@@ -77,36 +138,51 @@ function getWalletData(path) {
         return "NULL";
     }
 }
+function drawQRCode(content, canvasId) {
+    // Generate the QR code
+    QRCode.toCanvas(document.getElementById(canvasId), content, { color: { dark: "#ffffff", light: "#212529" }, width: 128, height: 128 }, function (err) {
+        if (err) {
+            throw err;
+        }
+    });
+}
 localStorage.setItem("ethAddress", getWalletData(path_1.default.join(__dirname + "/../wallets/eth_address.pem")));
+localStorage.setItem("btcAddress", getWalletData(path_1.default.join(__dirname + "/../wallets/btc_address.pem")));
 //HTML code segment
 function setHTMLObjects() {
     return __awaiter(this, void 0, void 0, function* () {
         //On Content Load
-        //@ts-expect-error
         ethBalance = yield getETHWalletBalance(localStorage.getItem("ethAddress").toString());
-        //@ts-expect-error
         sepEthBalance = yield getSepETHWalletBalance(localStorage.getItem("ethAddress").toString());
+        btcBalance = yield getBTCWalletBalance(localStorage.getItem("btcAddress").toString());
         /*ETHEREUM*/
-        //@ts-expect-error
-        document.getElementById("ethWalletAddress").textContent = `Wallet Address: ${yield localStorage.getItem("ethAddress")}`;
-        //@ts-expect-error
+        let ethAddr = yield localStorage.getItem("ethAddress");
+        document.getElementById("ethWalletAddress").textContent = `Wallet Address: ${ethAddr}`;
         document.getElementById("ethWalletBalance").textContent = `ETH Balance: ${ethBalance} ETH`;
         //@ts-expect-error
         document.getElementById("ethWalletBalanceValue").textContent = `USD Value: $${yield getUSDValue(ethBalance, localStorage.getItem("ethPrice")).toFixed(2)}`;
-        /*SEPOLIA ETHEREUM*/
+        drawQRCode(ethAddr, "eth-address-qrcode");
+        //Uncomment to reenable sepolia ethereum
+        ///*SEPOLIA ETHEREUM*/
+        //@/ts-expect-error
+        //document.getElementById("ethSepWalletAddress").textContent = `Wallet Address: ${await localStorage.getItem("ethAddress")}`;
+        //@/ts-expect-error
+        //document.getElementById("ethSepWalletBalance").textContent = `Sep. ETH Balance: ${sepEthBalance} ETH`;
+        //@/ts-expect-error
+        //document.getElementById("ethSepWalletBalanceValue").textContent = `USD Value: $${await getUSDValue(sepEthBalance, localStorage.getItem("ethPrice")).toFixed(2)}`;
+        /*BITCOIN*/
+        let btcAddr = yield localStorage.getItem("btcAddress");
+        document.getElementById("btcWalletAddress").textContent = `Wallet Address: ${btcAddr}`;
+        document.getElementById("btcWalletBalance").textContent = `BTC Balance: ${btcBalance} BTC`;
         //@ts-expect-error
-        document.getElementById("ethSepWalletAddress").textContent = `Wallet Address: ${yield localStorage.getItem("ethAddress")}`;
-        //@ts-expect-error
-        document.getElementById("ethSepWalletBalance").textContent = `Sep. ETH Balance: ${sepEthBalance} ETH`;
-        //@ts-expect-error
-        document.getElementById("ethSepWalletBalanceValue").textContent = `USD Value: $${yield getUSDValue(sepEthBalance, localStorage.getItem("ethPrice")).toFixed(2)}`;
+        document.getElementById("btcWalletBalanceValue").textContent = `USD Value: $${yield getUSDValue(btcBalance, localStorage.getItem("btcPrice")).toFixed(2)}`;
+        drawQRCode(btcAddr, "btc-address-qrcode");
     });
 }
 function checkWalletExistance() {
     return __awaiter(this, void 0, void 0, function* () {
         if (yield !fs_1.default.existsSync(path_1.default.join(__dirname + "/../wallets/hashed_password.txt"))) {
             yield window.addEventListener("DOMContentLoaded", () => __awaiter(this, void 0, void 0, function* () {
-                //@ts-expect-error
                 let modalElementMain = new bootstrap_1.Modal(document.getElementById("walletNoExistanceModal"));
                 modalElementMain.show();
             }));
