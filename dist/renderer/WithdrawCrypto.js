@@ -41,9 +41,11 @@ const fs = __importStar(require("fs"));
 const path_1 = __importDefault(require("path"));
 const crypto_js_1 = __importDefault(require("crypto-js"));
 const Ethers = __importStar(require("ethers"));
+const BIP39 = __importStar(require("bip39"));
 const BitcoinJS = __importStar(require("bitcoinjs-lib"));
 const ECPair = __importStar(require("ecpair"));
 const ecc = __importStar(require("tiny-secp256k1"));
+const Solana = __importStar(require("@solana/web3.js"));
 const sepoliaProvider = new Ethers.JsonRpcProvider("https://rpc2.sepolia.org/");
 const upperEthGasLimit = 0.00042;
 let selectedCurrency;
@@ -131,17 +133,31 @@ function confirmSendCrypto() {
                     gasPrice: Ethers.parseUnits("20", "gwei"),
                     gasLimit: 21000
                 };
-                let signedTX = yield wallet.sendTransaction(tx);
-                decryptedPriv = "";
-                console.log(`TX Hash: ${signedTX.hash}`);
-                //Open the Etherscan window
-                window.open(`https://etherscan.io/tx/${signedTX.hash}`);
+                try {
+                    let signedTX = yield wallet.sendTransaction(tx);
+                    decryptedPriv = "";
+                    console.log(`TX Hash: ${signedTX.hash}`);
+                    document.getElementById("feedback-text").textContent = "Transaction sent successfully!";
+                    document.getElementById("feedback-text").style.color = "green";
+                    document.getElementById("feedback-text").style.display = "block";
+                    //Open the Etherscan window
+                    window.open(`https://etherscan.io/tx/${signedTX.hash}`);
+                }
+                catch (error) {
+                    console.error(`Error sending transaction: ${error}`);
+                    document.getElementById("feedback-text").textContent = "Error sending transaction. Check that you have sufficent funds, otherwise try again later.";
+                    document.getElementById("feedback-text").style.color = "red";
+                    document.getElementById("feedback-text").style.display = "block";
+                }
             }
-            if (selectedCurrency === "Sepolia Ethereum") {
-                let encryptedPriv = readFile(path_1.default.join(__dirname + "/../wallets/eth_private.key"));
-                let decryptedPriv = crypto_js_1.default.enc.Utf8.stringify(crypto_js_1.default.AES.decrypt(encryptedPriv.replace(" (ENCRYPTED)", ""), enteredPassword));
+            //Uncomment to reenable sepolia ethereum
+            /*if (selectedCurrency === "Sepolia Ethereum") {
+                let encryptedPriv: string = readFile(path.join(__dirname + "/../wallets/eth_private.key"));
+                let decryptedPriv: string = CryptoJS.enc.Utf8.stringify(CryptoJS.AES.decrypt(encryptedPriv.replace(" (ENCRYPTED)", ""), enteredPassword));
+    
                 //@ts-expect-error
-                let adjustedForGas = parseFloat(document.getElementById("send-amount").value.toString()) - upperEthGasLimit;
+                let adjustedForGas: number = parseFloat(document.getElementById("send-amount").value.toString()) - upperEthGasLimit;
+    
                 //Ethers.js snippet for transaction creation
                 let wallet = new Ethers.Wallet(decryptedPriv, sepoliaProvider);
                 let tx = {
@@ -151,17 +167,20 @@ function confirmSendCrypto() {
                     gasPrice: Ethers.parseUnits("20", "gwei"),
                     gasLimit: 21000
                 };
-                let signedTX = yield wallet.sendTransaction(tx);
+    
+                let signedTX = await wallet.sendTransaction(tx);
+    
                 decryptedPriv = "";
+    
                 console.log(`TX Hash: ${signedTX.hash}`);
+    
                 //Open the Etherscan window
                 window.open(`https://sepolia.etherscan.io/tx/${signedTX.hash}`);
-            }
+            }*/
             if (selectedCurrency === "Bitcoin") {
                 let encryptedWIF = readFile(path_1.default.join(__dirname + "/../wallets/btc_private.key"));
                 let decryptedWIF = crypto_js_1.default.enc.Utf8.stringify(crypto_js_1.default.AES.decrypt(encryptedWIF.replace(" (ENCRYPTED)", ""), enteredPassword));
                 let sourceAddress = readFile(path_1.default.join(__dirname + "/../wallets/btc_address.pem"));
-                //let insight = new BitcoreExplorers.Insight("testnet");
                 const NETWORK = BitcoinJS.networks.bitcoin;
                 //Get the UTXOs
                 let utxos = [];
@@ -230,7 +249,7 @@ function confirmSendCrypto() {
                     psbt.finalizeAllInputs();
                     const tx = psbt.extractTransaction();
                     //Send the transaction
-                    const url = 'https://api.blockcypher.com/v1/btc/main/txs/push';
+                    const url = "https://api.blockcypher.com/v1/btc/main/txs/push";
                     const data = {
                         tx: tx.toHex(),
                     };
@@ -248,8 +267,43 @@ function confirmSendCrypto() {
                         console.log(responseData);
                     }
                     catch (error) {
-                        console.error('Error broadcasting transaction:', error);
+                        console.error("Error broadcasting transaction:", error);
                     }
+                }
+            }
+            if (selectedCurrency === "Solana") {
+                let encryptedMnemonic = readFile(path_1.default.join(__dirname + "/../wallets/mnemonic.txt"));
+                let decryptedMnemonic = crypto_js_1.default.enc.Utf8.stringify(crypto_js_1.default.AES.decrypt(encryptedMnemonic.replace(" (ENCRYPTED)", ""), enteredPassword));
+                //Connect to the Solana network/cluster
+                let connection = new Solana.Connection(Solana.clusterApiUrl("mainnet-beta"), "confirmed");
+                let minimumBalanceForRentExemption = yield connection.getMinimumBalanceForRentExemption(0);
+                //Create a keypair from secret key
+                let keypair = Solana.Keypair.fromSeed(BIP39.mnemonicToSeedSync(decryptedMnemonic).subarray(0, 32));
+                //Create a public key for the recipient
+                let recipientPubKey = new Solana.PublicKey(destinationAddress);
+                //Create a transaction instruction to send SOL
+                let instruction = Solana.SystemProgram.transfer({
+                    fromPubkey: keypair.publicKey,
+                    toPubkey: recipientPubKey,
+                    lamports: Math.ceil((parseFloat(sendAmount) - 0.000006) * Solana.LAMPORTS_PER_SOL - minimumBalanceForRentExemption) //We subtract 0.000006 as a constant to pay fees (will improve later)
+                });
+                //Create a transaction object
+                let tx = new Solana.Transaction().add(instruction);
+                //Sign and send the transaction
+                try {
+                    let sig = yield Solana.sendAndConfirmTransaction(connection, tx, [keypair]);
+                    console.log(`Sent SOL transaction with signature: ${sig}`);
+                    document.getElementById("feedback-text").textContent = "Transaction sent successfully!";
+                    document.getElementById("feedback-text").style.color = "green";
+                    document.getElementById("feedback-text").style.display = "block";
+                    //Open the SolScan window
+                    window.open(`https://solscan.io/tx/${sig}`);
+                }
+                catch (error) {
+                    document.getElementById("feedback-text").textContent = "Error sending transaction. Check that you have sufficent funds, otherwise try again later.";
+                    document.getElementById("feedback-text").style.color = "red";
+                    document.getElementById("feedback-text").style.display = "block";
+                    console.error("Error broadcasting transaction:", error);
                 }
             }
         }

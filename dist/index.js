@@ -54,12 +54,14 @@ function createWindows() {
     mainWindow.on("ready-to-show", () => mainWindow.show());
     mainWindow.webContents.executeJavaScript(`localStorage.setItem("etherscanAPIkey", "41EJZUY9SEWICJFJPM7FD4M8YZNSWF1JYM")`, true);
     mainWindow.webContents.executeJavaScript(`localStorage.setItem("etherscanBaseUrl", "https://api.etherscan.io/api")`, true);
+    mainWindow.webContents.executeJavaScript(`localStorage.setItem("solscanBaseUrl", "https://api.mainnet-beta.solana.com")`, true);
     mainWindow.webContents.executeJavaScript(`localStorage.setItem("sepEtherscanBaseUrl", "https://api-sepolia.etherscan.io/api")`, true);
     mainWindow.webContents.executeJavaScript(`localStorage.setItem("bitcoinexplorerBaseUrl", "https://bitcoinexplorer.org")`, true);
     mainWindow.webContents.executeJavaScript(`localStorage.setItem("testnetBitcoinexplorerBaseUrl", "https://blockstream.info/testnet/api")`, true);
-    mainWindow.webContents.executeJavaScript(`localStorage.setItem("coinGeckoEthQueryUrl", "https://api.coingecko.com/api/v3/simple")`, true);
+    mainWindow.webContents.executeJavaScript(`localStorage.setItem("coinGeckoQueryUrl", "https://api.coingecko.com/api/v3/simple")`, true);
     mainWindow.webContents.executeJavaScript(`localStorage.setItem("ethPrice", 0)`, true);
     mainWindow.webContents.executeJavaScript(`localStorage.setItem("btcPrice", 0)`, true);
+    mainWindow.webContents.executeJavaScript(`localStorage.setItem("solPrice", 0)`, true);
     mainWindow.webContents.executeJavaScript(`localStorage.setItem("ethAddress", "")`, true);
     mainWindow.reload(); //Force a reload so the ethPrice localStorage variable is up-to-date
 }

@@ -61,8 +61,9 @@
                 <ul class="dropdown-menu" aria-labelledby="cryptoDropdownMenuButton">
                   <li><a class="dropdown-item" href="#" onclick="setCurrency('Bitcoin')">Bitcoin</a></li>
                   <li><a class="dropdown-item" href="#" onclick="setCurrency('Ethereum')">Ethereum</a></li>
+                  <li><a class="dropdown-item" href="#" onclick="setCurrency('Solana')">Solana</a></li>
 
-                  <!--Uncomment to re-enable Sepolia Testnet-->
+                  <!--Uncomment to reenable sepolia ethereum-->
                   <!--li><a class="dropdown-item" href="#" onclick="setCurrency('Sepolia Ethereum')">Sepolia Ethereum</a></li-->
                 </ul>
               </div>
@@ -89,7 +90,7 @@
 
               <br />
               <br />
-              <i>Note: The sent amount is adjusted for gas fees, so the recieved amount may be lower.</i>
+              <i>Note: The sent amount is adjusted for gas fees and any network specific fees, so the sent or recieved amount may be lower.</i>
             </div>
           </div>
           <br />
@@ -119,7 +120,7 @@
                 <br />
                 <i>
                   Note: If you don't see a window pop-up with the transaction details on the blockchain explorer, the transaction didn't go through either 
-                  because of lack of funds or an internal error.
+                  because of lack of funds or an internal error. You can also wait for the text: "Transaction sent successfully!".
                 </i>
                 <br />
                 <br />

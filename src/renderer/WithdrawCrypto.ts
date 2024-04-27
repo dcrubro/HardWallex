@@ -11,6 +11,7 @@ import * as BitcoinJS from "bitcoinjs-lib";
 import * as ECPair from "ecpair";
 import * as Bitcore from "bitcore-lib";
 import * as ecc from "tiny-secp256k1";
+import * as Solana from "@solana/web3.js";
 
 const sepoliaProvider: any = new Ethers.JsonRpcProvider("https://rpc2.sepolia.org/");
 const upperEthGasLimit: number = 0.00042;
@@ -124,17 +125,34 @@ async function confirmSendCrypto() {
                 gasLimit: 21000
             };
 
-            let signedTX = await wallet.sendTransaction(tx);
+            try {
+                let signedTX = await wallet.sendTransaction(tx);
 
-            decryptedPriv = "";
+                decryptedPriv = "";
 
-            console.log(`TX Hash: ${signedTX.hash}`);
-            
-            //Open the Etherscan window
-            window.open(`https://etherscan.io/tx/${signedTX.hash}`);
+                console.log(`TX Hash: ${signedTX.hash}`);
+
+                document.getElementById("feedback-text").textContent = "Transaction sent successfully!";
+                
+                document.getElementById("feedback-text").style.color = "green";
+                
+                document.getElementById("feedback-text").style.display = "block";
+
+                //Open the Etherscan window
+                window.open(`https://etherscan.io/tx/${signedTX.hash}`);
+            } catch (error) {
+                console.error(`Error sending transaction: ${error}`);
+
+                document.getElementById("feedback-text").textContent = "Error sending transaction. Check that you have sufficent funds, otherwise try again later.";
+                
+                document.getElementById("feedback-text").style.color = "red";
+                
+                document.getElementById("feedback-text").style.display = "block";
+            }
         }
 
-        if (selectedCurrency === "Sepolia Ethereum") {
+        //Uncomment to reenable sepolia ethereum
+        /*if (selectedCurrency === "Sepolia Ethereum") {
             let encryptedPriv: string = readFile(path.join(__dirname + "/../wallets/eth_private.key"));
             let decryptedPriv: string = CryptoJS.enc.Utf8.stringify(CryptoJS.AES.decrypt(encryptedPriv.replace(" (ENCRYPTED)", ""), enteredPassword));
 
@@ -159,7 +177,7 @@ async function confirmSendCrypto() {
 
             //Open the Etherscan window
             window.open(`https://sepolia.etherscan.io/tx/${signedTX.hash}`);
-        }
+        }*/
 
         if (selectedCurrency === "Bitcoin") {
             let encryptedWIF: string = readFile(path.join(__dirname + "/../wallets/btc_private.key"));
@@ -167,8 +185,6 @@ async function confirmSendCrypto() {
 
             let sourceAddress: string = readFile(path.join(__dirname + "/../wallets/btc_address.pem"));
             
-            //let insight = new BitcoreExplorers.Insight("testnet");
-
             const NETWORK = BitcoinJS.networks.bitcoin;
 
             //Get the UTXOs
@@ -260,7 +276,7 @@ async function confirmSendCrypto() {
                 const tx = psbt.extractTransaction();
 
                 //Send the transaction
-                const url = 'https://api.blockcypher.com/v1/btc/main/txs/push';
+                const url = "https://api.blockcypher.com/v1/btc/main/txs/push";
                 const data = {
                     tx: tx.toHex(),
                 };
@@ -280,8 +296,56 @@ async function confirmSendCrypto() {
 
                     console.log(responseData);
                 } catch (error) {
-                    console.error('Error broadcasting transaction:', error);
+                    console.error("Error broadcasting transaction:", error);
                 }
+            }
+        }
+
+        if (selectedCurrency === "Solana") {
+            let encryptedMnemonic: string = readFile(path.join(__dirname + "/../wallets/mnemonic.txt"));
+            let decryptedMnemonic: string = CryptoJS.enc.Utf8.stringify(CryptoJS.AES.decrypt(encryptedMnemonic.replace(" (ENCRYPTED)", ""), enteredPassword));
+
+            //Connect to the Solana network/cluster
+            let connection = new Solana.Connection(Solana.clusterApiUrl("mainnet-beta"), "confirmed");
+            let minimumBalanceForRentExemption = await connection.getMinimumBalanceForRentExemption(0);
+
+            //Create a keypair from secret key
+            let keypair = Solana.Keypair.fromSeed(BIP39.mnemonicToSeedSync(decryptedMnemonic).subarray(0, 32));
+
+            //Create a public key for the recipient
+            let recipientPubKey = new Solana.PublicKey(destinationAddress);
+
+            //Create a transaction instruction to send SOL
+            let instruction = Solana.SystemProgram.transfer({
+                fromPubkey: keypair.publicKey,
+                toPubkey: recipientPubKey,
+                lamports: Math.ceil((parseFloat(sendAmount) - 0.000006) * Solana.LAMPORTS_PER_SOL - minimumBalanceForRentExemption) //We subtract 0.000006 as a constant to pay fees (will improve later)
+            });
+
+            //Create a transaction object
+            let tx = new Solana.Transaction().add(instruction);
+
+            //Sign and send the transaction
+            try {
+                let sig = await Solana.sendAndConfirmTransaction(connection, tx, [keypair]);
+                console.log(`Sent SOL transaction with signature: ${sig}`);
+
+                document.getElementById("feedback-text").textContent = "Transaction sent successfully!";
+                
+                document.getElementById("feedback-text").style.color = "green";
+                
+                document.getElementById("feedback-text").style.display = "block";
+
+                //Open the SolScan window
+                window.open(`https://solscan.io/tx/${sig}`);
+            } catch (error) {
+                document.getElementById("feedback-text").textContent = "Error sending transaction. Check that you have sufficent funds, otherwise try again later.";
+                
+                document.getElementById("feedback-text").style.color = "red";
+                
+                document.getElementById("feedback-text").style.display = "block";
+
+                console.error("Error broadcasting transaction:", error);
             }
         }
     } else {

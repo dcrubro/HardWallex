@@ -47,6 +47,8 @@
         </div>
 
         <!--Wallets panel-->
+
+        <!--Bitcoin Wallet-->
         <div class="component-panel text-white">
           <h3>Wallets</h3>
           <br />
@@ -69,9 +71,9 @@
               </div>
             </div>
           </div>
-          
           <br />
 
+          <!--Ethereum Wallet-->
           <div class="card">
             <div class="card-body row">
               <div class="col-md-8">
@@ -93,7 +95,29 @@
           </div>
           <br />
 
-          <!--Uncomment to re-enable Sepolia Testnet-->
+          <!--Solana Wallet-->
+          <div class="card">
+            <div class="card-body row">
+              <div class="col-md-8">
+                <h5 class="card-title">Solana Wallet</h5>
+                <p class="card-text" id="solWalletAddress">
+                  Wallet Address: 
+                </p>
+                <p class="card-text" id="solWalletBalance">
+                  SOL Balance: 
+                </p>
+                <p class="card-text" id="solWalletBalanceValue">
+                  USD Value: 
+                </p>
+              </div>
+              <div class="col-md-4 d-flex align-items-center justify-content-end">
+                <canvas id="sol-address-qrcode" style="max-width:100%;"></canvas>
+              </div>
+            </div>
+          </div>
+          <br />
+
+          <!--Uncomment to reenable sepolia ethereum-->
           <!--div class="card">
             <div class="card-body">
               <h5 class="card-title">Sepolia Ethereum Wallet (TESTNET)</h5>

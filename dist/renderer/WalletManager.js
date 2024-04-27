@@ -41,9 +41,11 @@ const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const bootstrap_1 = require("bootstrap");
 const QRCode = __importStar(require("qrcode"));
+const Solana = __importStar(require("@solana/web3.js"));
 let ethBalance;
 let sepEthBalance;
 let btcBalance;
+let solBalance;
 //Functions segment
 function getETHWalletBalance(address) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -55,6 +57,38 @@ function getETHWalletBalance(address) {
                 const balanceInWei = parseInt(data.result);
                 const balanceInEth = balanceInWei / 1e18; //Convert wei to Ether
                 return balanceInEth;
+            }
+            else {
+                console.log("Error occurred while fetching balance. Please check the Ethereum address or try again later.");
+                throw new Error(data.message);
+            }
+        }
+        catch (error) {
+            console.log("Error occurred while fetching balance. Please check the Ethereum address or try again later.");
+            throw error;
+        }
+    });
+}
+function getSOLWalletBalance(address) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const url = `${Solana.clusterApiUrl("mainnet-beta")}`;
+        const body = {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "getBalance",
+            "params": [
+                address,
+                {
+                    "commitment": "confirmed"
+                }
+            ]
+        };
+        try {
+            const response = yield fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+            const data = yield response.json();
+            if (data) {
+                const solBal = data.result.value / 1e9; // Convert lamports to SOL
+                return solBal;
             }
             else {
                 console.log("Error occurred while fetching balance. Please check the Ethereum address or try again later.");
@@ -148,13 +182,15 @@ function drawQRCode(content, canvasId) {
 }
 localStorage.setItem("ethAddress", getWalletData(path_1.default.join(__dirname + "/../wallets/eth_address.pem")));
 localStorage.setItem("btcAddress", getWalletData(path_1.default.join(__dirname + "/../wallets/btc_address.pem")));
+localStorage.setItem("solAddress", getWalletData(path_1.default.join(__dirname + "/../wallets/sol_address.pem")));
 //HTML code segment
 function setHTMLObjects() {
     return __awaiter(this, void 0, void 0, function* () {
         //On Content Load
         ethBalance = yield getETHWalletBalance(localStorage.getItem("ethAddress").toString());
-        sepEthBalance = yield getSepETHWalletBalance(localStorage.getItem("ethAddress").toString());
+        //sepEthBalance = await getSepETHWalletBalance(localStorage.getItem("ethAddress").toString());
         btcBalance = yield getBTCWalletBalance(localStorage.getItem("btcAddress").toString());
+        solBalance = yield getSOLWalletBalance(localStorage.getItem("solAddress").toString());
         /*ETHEREUM*/
         let ethAddr = yield localStorage.getItem("ethAddress");
         document.getElementById("ethWalletAddress").textContent = `Wallet Address: ${ethAddr}`;
@@ -177,6 +213,13 @@ function setHTMLObjects() {
         //@ts-expect-error
         document.getElementById("btcWalletBalanceValue").textContent = `USD Value: $${yield getUSDValue(btcBalance, localStorage.getItem("btcPrice")).toFixed(2)}`;
         drawQRCode(btcAddr, "btc-address-qrcode");
+        /*SOLANA*/
+        let solAddr = yield localStorage.getItem("solAddress");
+        document.getElementById("solWalletAddress").textContent = `Wallet Address: ${solAddr}`;
+        document.getElementById("solWalletBalance").textContent = `SOL Balance: ${solBalance} SOL`;
+        //@ts-expect-error
+        document.getElementById("solWalletBalanceValue").textContent = `USD Value: $${yield getUSDValue(solBalance, localStorage.getItem("solPrice")).toFixed(2)}`;
+        drawQRCode(solAddr, "sol-address-qrcode");
     });
 }
 function checkWalletExistance() {
