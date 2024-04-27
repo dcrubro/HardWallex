@@ -22,7 +22,7 @@
       "icon": "icons/icon.ico"
     },
     "linux": {
-      "icon": "icons/"
+      "icon": "icons/icon.png"
     }
 }
   

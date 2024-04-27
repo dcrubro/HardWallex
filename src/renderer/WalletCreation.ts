@@ -2,14 +2,16 @@
 //Written by DcruBro @ https://dcrubro.com/
 
 import * as fs from "fs";
+import * as bs58 from "bs58";
 import path from "path";
-import CryptoJS from "crypto-js";
+import CryptoJS, { SHA256 } from "crypto-js";
 import Crypto from "crypto";
 import * as Ethers from "ethers";
 import * as BIP39 from "bip39";
 import * as BIP32 from "bip32";
 import * as BitcoinJS from "bitcoinjs-lib";
 import * as ecc from "tiny-secp256k1";
+import * as Solana from "@solana/web3.js";
 
 let mnemonic: string;
 
@@ -43,6 +45,18 @@ function generateBTCWallet(mnemonic: string) {
         "private": receivingWIF
     }
         
+    return data;
+}
+
+function generateSOLWallet(mnemonic: string) {
+    let seed = BIP39.mnemonicToSeedSync(mnemonic);
+    let keypair = Solana.Keypair.fromSeed(seed.subarray(0, 32)); //Solana wallets only require the first 32 bytes of the mnemonic seed
+
+    let data = {
+        "address": keypair.publicKey.toBase58().toString(),
+        "private": bs58.encode(keypair.secretKey).toString()
+    }
+
     return data;
 }
 
@@ -122,6 +136,10 @@ function confirmCreateWallet() {
             writeFile(path.join(__dirname + "/../wallets/"), "btc_address.pem", btcData.address);
             writeFile(path.join(__dirname + "/../wallets/"), "btc_private.key", encryptedPrivateKey);
 
+            let solData = generateSOLWallet(mnemonic);
+            encryptedPrivateKey = `${CryptoJS.AES.encrypt(solData.private, enteredPassword)} (ENCRYPTED)`;
+            writeFile(path.join(__dirname + "/../wallets/"), "sol_address.pem", solData.address);
+            writeFile(path.join(__dirname + "/../wallets/"), "sol_private.key", encryptedPrivateKey);
             
             document.getElementById("feedback-text").textContent = "Wallet creation successful!";
             
@@ -149,8 +167,7 @@ function confirmImportWallet(readFromSettingsPage: boolean) {
         //We are probably reimporting via the settings page
         //@ts-expect-error
         enteredPassword = document.getElementById("password-text-reimport-wallet").value;
-        //@ts-expect-error
-        enteredConfirmPassword = document.getElementById("password-text-reimport-wallet").value;
+        enteredConfirmPassword = readFile(path.join(__dirname + "/../wallets/hashed_password.txt"));
     }
 
     if (/\s/.test(enteredPassword) || enteredPassword === "") {
@@ -163,14 +180,23 @@ function confirmImportWallet(readFromSettingsPage: boolean) {
         document.getElementById("feedback-text").style.display = "block";
     } else {
         //Valid password
-        if (enteredPassword !== enteredConfirmPassword) {
+        if ((enteredPassword !== enteredConfirmPassword) && (SHA256(enteredPassword).toString() !== enteredConfirmPassword)) {
             //Passwords do not match
             
-            document.getElementById("feedback-text").textContent = "Passwords do not match.";
+            if (!readFromSettingsPage) {
+                document.getElementById("feedback-text").textContent = "Passwords do not match.";
+                
+                document.getElementById("feedback-text").style.color = "red";
+                
+                document.getElementById("feedback-text").style.display = "block";
+            } else {
+                document.getElementById("feedback-text-reimport-wallet").textContent = "Passwords do not match.";
+                
+                document.getElementById("feedback-text-reimport-wallet").style.color = "red";
+                
+                document.getElementById("feedback-text-reimport-wallet").style.display = "block";
+            }
             
-            document.getElementById("feedback-text").style.color = "red";
-            
-            document.getElementById("feedback-text").style.display = "block";
         } else {
             let readMnemonic: string;
 
@@ -199,6 +225,11 @@ function confirmImportWallet(readFromSettingsPage: boolean) {
             encryptedPrivateKey = `${CryptoJS.AES.encrypt(btcData.private, enteredPassword)} (ENCRYPTED)`;
             writeFile(path.join(__dirname + "/../wallets/"), "btc_address.pem", btcData.address);
             writeFile(path.join(__dirname + "/../wallets/"), "btc_private.key", encryptedPrivateKey);
+
+            let solData = generateSOLWallet(readMnemonic);
+            encryptedPrivateKey = `${CryptoJS.AES.encrypt(solData.private, enteredPassword)} (ENCRYPTED)`;
+            writeFile(path.join(__dirname + "/../wallets/"), "sol_address.pem", solData.address);
+            writeFile(path.join(__dirname + "/../wallets/"), "sol_private.key", encryptedPrivateKey);
 
             if (!readFromSettingsPage) {
                 document.getElementById("feedback-text").textContent = "Wallet import successful!";

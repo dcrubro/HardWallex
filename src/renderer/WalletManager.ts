@@ -5,10 +5,12 @@ import fs from "fs";
 import path from "path";
 import { Modal } from "bootstrap";
 import * as QRCode from "qrcode";
+import * as Solana from "@solana/web3.js";
 
 let ethBalance: number;
 let sepEthBalance: number;
 let btcBalance: number;
+let solBalance: number;
 
 //Functions segment
 async function getETHWalletBalance(address: string): Promise<number> {
@@ -22,6 +24,37 @@ async function getETHWalletBalance(address: string): Promise<number> {
             const balanceInWei = parseInt(data.result);
             const balanceInEth = balanceInWei / 1e18; //Convert wei to Ether
             return balanceInEth;
+        } else {
+            console.log("Error occurred while fetching balance. Please check the Ethereum address or try again later.");
+            throw new Error(data.message);
+        }
+    } catch (error) {
+        console.log("Error occurred while fetching balance. Please check the Ethereum address or try again later.");
+        throw error;
+    }
+}
+
+async function getSOLWalletBalance(address: string): Promise<number> {
+    const url = `${Solana.clusterApiUrl("mainnet-beta")}`;
+    const body = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getBalance",
+        "params": [
+            address,
+            {
+                "commitment": "confirmed"
+            }
+        ]
+    };
+    
+    try {
+        const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        const data = await response.json();
+
+        if (data) {
+            const solBal = data.result.value / 1e9; // Convert lamports to SOL
+            return solBal;
         } else {
             console.log("Error occurred while fetching balance. Please check the Ethereum address or try again later.");
             throw new Error(data.message);
@@ -111,6 +144,7 @@ function drawQRCode(content, canvasId) {
 
 localStorage.setItem("ethAddress", getWalletData(path.join(__dirname + "/../wallets/eth_address.pem")));
 localStorage.setItem("btcAddress", getWalletData(path.join(__dirname + "/../wallets/btc_address.pem")));
+localStorage.setItem("solAddress", getWalletData(path.join(__dirname + "/../wallets/sol_address.pem")));
 
 //HTML code segment
 
@@ -118,10 +152,9 @@ async function setHTMLObjects() {
     //On Content Load
     
     ethBalance = await getETHWalletBalance(localStorage.getItem("ethAddress").toString());
-    
-    sepEthBalance = await getSepETHWalletBalance(localStorage.getItem("ethAddress").toString());
-    
+    //sepEthBalance = await getSepETHWalletBalance(localStorage.getItem("ethAddress").toString());
     btcBalance = await getBTCWalletBalance(localStorage.getItem("btcAddress").toString());
+    solBalance = await getSOLWalletBalance(localStorage.getItem("solAddress").toString());
     
     /*ETHEREUM*/
     let ethAddr = await localStorage.getItem("ethAddress");
@@ -154,6 +187,17 @@ async function setHTMLObjects() {
     document.getElementById("btcWalletBalanceValue").textContent = `USD Value: $${await getUSDValue(btcBalance, localStorage.getItem("btcPrice")).toFixed(2)}`;
     
     drawQRCode(btcAddr, "btc-address-qrcode");
+
+    /*SOLANA*/
+    let solAddr = await localStorage.getItem("solAddress");
+
+    document.getElementById("solWalletAddress").textContent = `Wallet Address: ${solAddr}`;
+    
+    document.getElementById("solWalletBalance").textContent = `SOL Balance: ${solBalance} SOL`;
+    //@ts-expect-error
+    document.getElementById("solWalletBalanceValue").textContent = `USD Value: $${await getUSDValue(solBalance, localStorage.getItem("solPrice")).toFixed(2)}`;
+    
+    drawQRCode(solAddr, "sol-address-qrcode");
 }
 
 async function checkWalletExistance() {

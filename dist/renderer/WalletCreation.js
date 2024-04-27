@@ -29,13 +29,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs = __importStar(require("fs"));
+const bs58 = __importStar(require("bs58"));
 const path_1 = __importDefault(require("path"));
-const crypto_js_1 = __importDefault(require("crypto-js"));
+const crypto_js_1 = __importStar(require("crypto-js"));
 const Ethers = __importStar(require("ethers"));
 const BIP39 = __importStar(require("bip39"));
 const BIP32 = __importStar(require("bip32"));
 const BitcoinJS = __importStar(require("bitcoinjs-lib"));
 const ecc = __importStar(require("tiny-secp256k1"));
+const Solana = __importStar(require("@solana/web3.js"));
 let mnemonic;
 function generateMnemonicPhrase() {
     const mnemonic = BIP39.generateMnemonic();
@@ -58,6 +60,15 @@ function generateBTCWallet(mnemonic) {
     let data = {
         "address": receivingAddress,
         "private": receivingWIF
+    };
+    return data;
+}
+function generateSOLWallet(mnemonic) {
+    let seed = BIP39.mnemonicToSeedSync(mnemonic);
+    let keypair = Solana.Keypair.fromSeed(seed.subarray(0, 32)); //Solana wallets only require the first 32 bytes of the mnemonic seed
+    let data = {
+        "address": keypair.publicKey.toBase58().toString(),
+        "private": bs58.encode(keypair.secretKey).toString()
     };
     return data;
 }
@@ -124,6 +135,10 @@ function confirmCreateWallet() {
             encryptedPrivateKey = `${crypto_js_1.default.AES.encrypt(btcData.private, enteredPassword)} (ENCRYPTED)`;
             writeFile(path_1.default.join(__dirname + "/../wallets/"), "btc_address.pem", btcData.address);
             writeFile(path_1.default.join(__dirname + "/../wallets/"), "btc_private.key", encryptedPrivateKey);
+            let solData = generateSOLWallet(mnemonic);
+            encryptedPrivateKey = `${crypto_js_1.default.AES.encrypt(solData.private, enteredPassword)} (ENCRYPTED)`;
+            writeFile(path_1.default.join(__dirname + "/../wallets/"), "sol_address.pem", solData.address);
+            writeFile(path_1.default.join(__dirname + "/../wallets/"), "sol_private.key", encryptedPrivateKey);
             document.getElementById("feedback-text").textContent = "Wallet creation successful!";
             document.getElementById("feedback-text").style.color = "green";
             document.getElementById("feedback-text").style.display = "block";
@@ -146,8 +161,7 @@ function confirmImportWallet(readFromSettingsPage) {
         //We are probably reimporting via the settings page
         //@ts-expect-error
         enteredPassword = document.getElementById("password-text-reimport-wallet").value;
-        //@ts-expect-error
-        enteredConfirmPassword = document.getElementById("password-text-reimport-wallet").value;
+        enteredConfirmPassword = readFile(path_1.default.join(__dirname + "/../wallets/hashed_password.txt"));
     }
     if (/\s/.test(enteredPassword) || enteredPassword === "") {
         //Invalid password
@@ -157,11 +171,18 @@ function confirmImportWallet(readFromSettingsPage) {
     }
     else {
         //Valid password
-        if (enteredPassword !== enteredConfirmPassword) {
+        if ((enteredPassword !== enteredConfirmPassword) && ((0, crypto_js_1.SHA256)(enteredPassword).toString() !== enteredConfirmPassword)) {
             //Passwords do not match
-            document.getElementById("feedback-text").textContent = "Passwords do not match.";
-            document.getElementById("feedback-text").style.color = "red";
-            document.getElementById("feedback-text").style.display = "block";
+            if (!readFromSettingsPage) {
+                document.getElementById("feedback-text").textContent = "Passwords do not match.";
+                document.getElementById("feedback-text").style.color = "red";
+                document.getElementById("feedback-text").style.display = "block";
+            }
+            else {
+                document.getElementById("feedback-text-reimport-wallet").textContent = "Passwords do not match.";
+                document.getElementById("feedback-text-reimport-wallet").style.color = "red";
+                document.getElementById("feedback-text-reimport-wallet").style.display = "block";
+            }
         }
         else {
             let readMnemonic;
@@ -187,6 +208,10 @@ function confirmImportWallet(readFromSettingsPage) {
             encryptedPrivateKey = `${crypto_js_1.default.AES.encrypt(btcData.private, enteredPassword)} (ENCRYPTED)`;
             writeFile(path_1.default.join(__dirname + "/../wallets/"), "btc_address.pem", btcData.address);
             writeFile(path_1.default.join(__dirname + "/../wallets/"), "btc_private.key", encryptedPrivateKey);
+            let solData = generateSOLWallet(readMnemonic);
+            encryptedPrivateKey = `${crypto_js_1.default.AES.encrypt(solData.private, enteredPassword)} (ENCRYPTED)`;
+            writeFile(path_1.default.join(__dirname + "/../wallets/"), "sol_address.pem", solData.address);
+            writeFile(path_1.default.join(__dirname + "/../wallets/"), "sol_private.key", encryptedPrivateKey);
             if (!readFromSettingsPage) {
                 document.getElementById("feedback-text").textContent = "Wallet import successful!";
                 document.getElementById("feedback-text").style.color = "green";
