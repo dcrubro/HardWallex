@@ -12,6 +12,8 @@ import * as BIP32 from "bip32";
 import * as BitcoinJS from "bitcoinjs-lib";
 import * as ecc from "tiny-secp256k1";
 import * as Solana from "@solana/web3.js";
+//@ts-expect-error
+import { writeFile, readFile } from "../dist/renderer/CommonFunctions";
 
 let mnemonic: string;
 
@@ -58,27 +60,6 @@ function generateSOLWallet(mnemonic: string) {
     }
 
     return data;
-}
-
-function writeFile(destinationFolder: string, fileName: string, data: string) {
-    if (fs.existsSync(destinationFolder)) {
-        fs.writeFile(`${destinationFolder}${fileName}`, data, function(err) {
-            if (err) throw err;
-        });
-    } else {
-        console.error("Error: Destination folder does not exist.");
-        return;
-    }
-}
-
-function readFile(filePath: string): any {
-    //Pretty self-explanatory
-    if (fs.existsSync(filePath)) {
-        return fs.readFileSync(`${filePath}`).toString();
-    } else {
-        console.error("Error: Destination folder does not exist.");
-        return;
-    }
 }
 
 function getWalletInfo() {
@@ -140,6 +121,14 @@ function confirmCreateWallet() {
             encryptedPrivateKey = `${CryptoJS.AES.encrypt(solData.private, enteredPassword)} (ENCRYPTED)`;
             writeFile(path.join(__dirname + "/../wallets/"), "sol_address.pem", solData.address);
             writeFile(path.join(__dirname + "/../wallets/"), "sol_private.key", encryptedPrivateKey);
+
+            //Create base JSON file for custom assets
+            let customAssetData = {
+                "Assets": []
+            }
+            if (!fs.existsSync(path.join(__dirname + "/../wallets/customassets.json"))) {
+                writeFile(path.join(__dirname + "/../wallets/"), "customassets.json", JSON.stringify(customAssetData));
+            }
             
             document.getElementById("feedback-text").textContent = "Wallet creation successful!";
             
@@ -230,6 +219,14 @@ function confirmImportWallet(readFromSettingsPage: boolean) {
             encryptedPrivateKey = `${CryptoJS.AES.encrypt(solData.private, enteredPassword)} (ENCRYPTED)`;
             writeFile(path.join(__dirname + "/../wallets/"), "sol_address.pem", solData.address);
             writeFile(path.join(__dirname + "/../wallets/"), "sol_private.key", encryptedPrivateKey);
+
+            //Create base JSON file for custom assets
+            let customAssetData = {
+                "Assets": []
+            }
+            if (!fs.existsSync(path.join(__dirname + "/../wallets/customassets.json"))) {
+                writeFile(path.join(__dirname + "/../wallets/"), "customassets.json", JSON.stringify(customAssetData));
+            }
 
             if (!readFromSettingsPage) {
                 document.getElementById("feedback-text").textContent = "Wallet import successful!";

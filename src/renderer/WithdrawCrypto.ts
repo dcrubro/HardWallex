@@ -12,20 +12,13 @@ import * as ECPair from "ecpair";
 import * as Bitcore from "bitcore-lib";
 import * as ecc from "tiny-secp256k1";
 import * as Solana from "@solana/web3.js";
+//@ts-expect-error
+import { writeFile, readFile } from "../dist/renderer/CommonFunctions";
 
 const sepoliaProvider: any = new Ethers.JsonRpcProvider("https://rpc2.sepolia.org/");
 const upperEthGasLimit: number = 0.00042;
 
 let selectedCurrency: string;
-
-function readFile(filePath: string): any {
-    if (fs.existsSync(filePath)) {
-        return fs.readFileSync(`${filePath}`).toString();
-    } else {
-        console.error("Error: Destination folder does not exist.");
-        return;
-    }
-}
 
 function updateConfirmModalData() {
     //@ts-expect-error

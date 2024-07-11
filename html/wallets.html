@@ -52,6 +52,11 @@
         <div class="component-panel text-white">
           <h3>Wallets</h3>
           <br />
+          <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAssetModal">
+            Add a Custom Asset
+          </button>
+          <br />
+          <br />
           <div class="card">
             <div class="card-body row">
               <div class="col-md-8">
@@ -131,7 +136,15 @@
                 USD Value: 
               </p>
             </div>
-          </div-->
+          </div>
+          <br /-->
+          
+          <div id="custom-assets">
+
+          </div>
+
+          <p><i>Some data might be inaccessable due to outages.</i></p>
+
         </div>
 
         <!--Creation Confirm Modal-->
@@ -153,6 +166,45 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" onclick="goToImportWallet()">Import Wallet</button>
                 <button type="button" class="btn btn-primary" onclick="goToCreateWallet()">Create Wallet</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!--Add Asset Modal-->
+        <div class="modal fade" id="addAssetModal" tabindex="-1" aria-labelledby="addAssetModalLabel" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="addAssetModalLabel">Add a Custom Asset</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+
+              <div class="modal-body">
+                <p>Please enter the asset details below.</p>
+                <br />
+
+                <p>Asset Network:</p>
+                <div>
+                  <button class="btn btn-secondary" onclick="setAssetNetwork('Ethereum')">Ethereum</button>
+                </div>
+
+                <br />
+                <strong id="add-custom-asset-selected-network-text">Selected network: None</strong>
+                <br />
+                <br />
+
+                <div class="mb-3">
+                  <label for="input-custom-asset-contract-address" class="col-form-label">Asset Contract Address:</label>
+                  <input class="form-control" type="username" id="input-custom-asset-contract-address"></input>
+                </div>
+
+                <p style="color: red; display: none;" id="add-custom-asset-feedback-text">FEEDBACK TEXT</p>
+              </div>
+
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="confirmAddCustomAsset()">Add Asset</button>
               </div>
             </div>
           </div>

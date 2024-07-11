@@ -8,7 +8,7 @@ process.env.NODE_ENV = "production"; //Set this to "production" for prod. build 
 let mainWindow: BrowserWindow;
 
 const isMacPlatform: boolean = process.platform === 'darwin';
-const isDevMode: boolean = process.env.NODE_ENV !== "production";
+const isDevMode: boolean = process.env.NODE_ENV !== "development";
 
 app.on("ready", createWindows);
 

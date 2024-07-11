@@ -39,6 +39,7 @@ To update your wallet, simply follow the installation steps again and overwrite 
 ## Supported currencies
 - **Bitcoin** (BTC)
 - **Ethereum** (ETH)
+- **Solana** (SOL)
 - **Note:** *This list is subject to change*
 
 <br>

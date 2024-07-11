@@ -37,7 +37,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const fs = __importStar(require("fs"));
 const path_1 = __importDefault(require("path"));
 const crypto_js_1 = __importDefault(require("crypto-js"));
 const Ethers = __importStar(require("ethers"));
@@ -46,18 +45,11 @@ const BitcoinJS = __importStar(require("bitcoinjs-lib"));
 const ECPair = __importStar(require("ecpair"));
 const ecc = __importStar(require("tiny-secp256k1"));
 const Solana = __importStar(require("@solana/web3.js"));
+//@ts-expect-error
+const CommonFunctions_1 = require("../dist/renderer/CommonFunctions");
 const sepoliaProvider = new Ethers.JsonRpcProvider("https://rpc2.sepolia.org/");
 const upperEthGasLimit = 0.00042;
 let selectedCurrency;
-function readFile(filePath) {
-    if (fs.existsSync(filePath)) {
-        return fs.readFileSync(`${filePath}`).toString();
-    }
-    else {
-        console.error("Error: Destination folder does not exist.");
-        return;
-    }
-}
 function updateConfirmModalData() {
     //@ts-expect-error
     let sendingTo = document.getElementById("destination-address").value;
@@ -91,7 +83,7 @@ function confirmSendCrypto() {
         document.getElementById("feedback-text").style.display = "none";
         //@ts-expect-error
         let enteredPassword = document.getElementById("password-text").value;
-        let hashedPassword = yield readFile(path_1.default.join(__dirname + "/../wallets/hashed_password.txt"));
+        let hashedPassword = yield (0, CommonFunctions_1.readFile)(path_1.default.join(__dirname + "/../wallets/hashed_password.txt"));
         //@ts-expect-error
         let destinationAddress = document.getElementById("destination-address").value;
         //@ts-expect-error
@@ -120,7 +112,7 @@ function confirmSendCrypto() {
         if (crypto_js_1.default.SHA256(enteredPassword).toString() === hashedPassword) {
             //Passwords match
             if (selectedCurrency === "Ethereum") {
-                let encryptedPriv = readFile(path_1.default.join(__dirname + "/../wallets/eth_private.key"));
+                let encryptedPriv = (0, CommonFunctions_1.readFile)(path_1.default.join(__dirname + "/../wallets/eth_private.key"));
                 let decryptedPriv = crypto_js_1.default.enc.Utf8.stringify(crypto_js_1.default.AES.decrypt(encryptedPriv.replace(" (ENCRYPTED)", ""), enteredPassword));
                 //@ts-expect-error
                 let adjustedForGas = parseFloat(document.getElementById("send-amount").value.toString()) - upperEthGasLimit;
@@ -178,9 +170,9 @@ function confirmSendCrypto() {
                 window.open(`https://sepolia.etherscan.io/tx/${signedTX.hash}`);
             }*/
             if (selectedCurrency === "Bitcoin") {
-                let encryptedWIF = readFile(path_1.default.join(__dirname + "/../wallets/btc_private.key"));
+                let encryptedWIF = (0, CommonFunctions_1.readFile)(path_1.default.join(__dirname + "/../wallets/btc_private.key"));
                 let decryptedWIF = crypto_js_1.default.enc.Utf8.stringify(crypto_js_1.default.AES.decrypt(encryptedWIF.replace(" (ENCRYPTED)", ""), enteredPassword));
-                let sourceAddress = readFile(path_1.default.join(__dirname + "/../wallets/btc_address.pem"));
+                let sourceAddress = (0, CommonFunctions_1.readFile)(path_1.default.join(__dirname + "/../wallets/btc_address.pem"));
                 const NETWORK = BitcoinJS.networks.bitcoin;
                 //Get the UTXOs
                 let utxos = [];
@@ -272,7 +264,7 @@ function confirmSendCrypto() {
                 }
             }
             if (selectedCurrency === "Solana") {
-                let encryptedMnemonic = readFile(path_1.default.join(__dirname + "/../wallets/mnemonic.txt"));
+                let encryptedMnemonic = (0, CommonFunctions_1.readFile)(path_1.default.join(__dirname + "/../wallets/mnemonic.txt"));
                 let decryptedMnemonic = crypto_js_1.default.enc.Utf8.stringify(crypto_js_1.default.AES.decrypt(encryptedMnemonic.replace(" (ENCRYPTED)", ""), enteredPassword));
                 //Connect to the Solana network/cluster
                 let connection = new Solana.Connection(Solana.clusterApiUrl("mainnet-beta"), "confirmed");

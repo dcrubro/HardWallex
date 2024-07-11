@@ -30,7 +30,7 @@ const path = __importStar(require("path"));
 process.env.NODE_ENV = "production"; //Set this to "production" for prod. build and "development" for dev mode
 let mainWindow;
 const isMacPlatform = process.platform === 'darwin';
-const isDevMode = process.env.NODE_ENV !== "production";
+const isDevMode = process.env.NODE_ENV !== "development";
 electron_1.app.on("ready", createWindows);
 function createWindows() {
     mainWindow = new electron_1.BrowserWindow({

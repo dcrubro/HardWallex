@@ -6,6 +6,8 @@ import path from "path";
 import { Modal } from "bootstrap";
 import * as QRCode from "qrcode";
 import * as Solana from "@solana/web3.js";
+//@ts-expect-error
+import { writeFile, readFile } from "../dist/renderer/CommonFunctions";
 
 let ethBalance: number;
 let sepEthBalance: number;
@@ -207,6 +209,85 @@ async function checkWalletExistance() {
             let modalElementMain = new Modal(document.getElementById("walletNoExistanceModal"));
             modalElementMain.show();
         });
+    }
+}
+
+//Context boundary: custom assets
+let customAssetNetwork: string = "";
+
+function setAssetNetwork(network: string) {
+    customAssetNetwork = network;
+
+    document.getElementById("add-custom-asset-selected-network-text").textContent = `Selected network: ${network}`;
+}
+
+async function confirmAddCustomAsset() {
+    //@ts-expect-error
+    let assetContractAddress = document.getElementById("input-custom-asset-contract-address").value;
+
+    if (customAssetNetwork === "Ethereum") {
+        //Retrieve asset data from Etherscan
+        const url = `${localStorage.getItem("etherscanBaseUrl")}/?module=account&action=tokentx&contractaddress=${assetContractAddress}&page=1&offset=5&apikey=${localStorage.getItem("etherscanAPIkey")}`;
+        
+        let symbol: string;
+        let name: string;
+        let decimal: number;
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+    
+            if (data.status === "1") {
+                symbol = data.result[0].tokenSymbol;
+                name = data.result[0].tokenName;
+                decimal = parseInt(data.result[0].tokenDecimal);
+            } else {
+                console.log("Error occurred while fetching balance. Please check the Ethereum address or try again later.");
+
+                document.getElementById("add-custom-asset-feedback-text").textContent = "Error getting asset data. Please check the contract address.";
+                document.getElementById("add-custom-asset-feedback-text").style.color = "red";
+                document.getElementById("add-custom-asset-feedback-text").style.display = "block";
+                
+                throw new Error(data.message);
+            }
+        } catch (error) {
+            console.log("Error occurred while fetching balance. Please check the Ethereum address or try again later.");
+
+            document.getElementById("add-custom-asset-feedback-text").textContent = "Error getting asset data. Please check the contract address.";
+            document.getElementById("add-custom-asset-feedback-text").style.color = "red";
+            document.getElementById("add-custom-asset-feedback-text").style.display = "block";
+            
+            throw error;
+        }
+
+        //Right here we hope to God that the asset data was actually successfully fetched, and that TypeScript isn't screwing us over with false information.
+
+        //We read the current custom assets stored in a json file. This should we parsed into a JS list object (hopefully).
+        let jsonCustomAssets: any[] = JSON.parse(readFile(path.join(__dirname + "/../wallets/customassets.json")));
+
+        //Construct and append the data to the JSON object
+        let constructedTokenObject = {
+            "TokenNetwork": customAssetNetwork,
+            "TokenName": name,
+            "TokenSymbol": symbol,
+            "TokenDecimals": decimal,
+            "TokenContractAddress": assetContractAddress
+        };
+
+        //@ts-expect-error
+        jsonCustomAssets.Assets.push(constructedTokenObject);
+
+        //TODO: When adding a custom asset, make sure that the asset is not already in the customassets.json file,
+        //as that will result in repeat assets being added, which might cause issues down the line.
+
+        console.log(jsonCustomAssets);
+
+        //Push changes to the customassets.json file
+        writeFile(path.join(__dirname + "/../wallets/"), "customassets.json", JSON.stringify(jsonCustomAssets));
+
+        document.getElementById("add-custom-asset-feedback-text").textContent = "Successfully added the custom asset!";
+        document.getElementById("add-custom-asset-feedback-text").style.color = "green";
+        document.getElementById("add-custom-asset-feedback-text").style.display = "block";
     }
 }
 
