@@ -29,20 +29,40 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const FS = __importStar(require("fs"));
 const Path = __importStar(require("path"));
 const CRYPTO_js_2 = __importStar(require("crypto-js"));
-//@ts-expect-error
-const CommonFunctions_1 = require("../dist/renderer/CommonFunctions");
+function writeFile(destinationFolder, fileName, data) {
+    if (FS.existsSync(destinationFolder)) {
+        FS.writeFile(`${destinationFolder}${fileName}`, data, function (err) {
+            if (err)
+                throw err;
+        });
+    }
+    else {
+        console.error("Error: Destination folder does not exist.");
+        return;
+    }
+}
+function readFile(filePath) {
+    //Pretty self-explanatory
+    if (FS.existsSync(filePath)) {
+        return FS.readFileSync(`${filePath}`).toString();
+    }
+    else {
+        console.error("Error: Destination folder does not exist.");
+        return;
+    }
+}
 function confirmExportWallet() {
     //@ts-expect-error
     let enteredPassword = document.getElementById("password-text-export-wallet").value;
-    let hashedPassword = (0, CommonFunctions_1.readFile)(Path.join(__dirname + "/../wallets/hashed_password.txt"));
+    let hashedPassword = readFile(Path.join(__dirname + "/../wallets/hashed_password.txt"));
     if (CRYPTO_js_2.SHA256(enteredPassword).toString() === hashedPassword) {
         //Password is correct
         //Get the current date and time for identification
         let date = new Date();
         let timeString = `${date.getDate()}-${date.getMonth()}-${date.getFullYear()}_${date.getHours()}-${date.getMinutes()}-${date.getSeconds()}`;
         //Manual files
-        let decryptedMnemonic = CRYPTO_js_2.enc.Utf8.stringify(CRYPTO_js_2.AES.decrypt((0, CommonFunctions_1.readFile)(Path.join(__dirname + "/../wallets/mnemonic.txt")).replace(" (ENCRYPTED)", ""), enteredPassword));
-        (0, CommonFunctions_1.writeFile)(Path.join(__dirname + "/../exports/"), `mnemonic_decrypted_${timeString}.txt`, decryptedMnemonic);
+        let decryptedMnemonic = CRYPTO_js_2.enc.Utf8.stringify(CRYPTO_js_2.AES.decrypt(readFile(Path.join(__dirname + "/../wallets/mnemonic.txt")).replace(" (ENCRYPTED)", ""), enteredPassword));
+        writeFile(Path.join(__dirname + "/../exports/"), `mnemonic_decrypted_${timeString}.txt`, decryptedMnemonic);
         //Automatic files (for future-proofing)
         try {
             const files = FS.readdirSync(Path.join(__dirname + "/../wallets/"));
@@ -54,7 +74,7 @@ function confirmExportWallet() {
                     let encryptedData = data.replace(/\s+\(ENCRYPTED\)$/g, '');
                     // Decrypt using the passed key
                     let decryptedData = CRYPTO_js_2.AES.decrypt(encryptedData, enteredPassword).toString(CRYPTO_js_2.enc.Utf8);
-                    (0, CommonFunctions_1.writeFile)(Path.join(__dirname + "/../exports/"), `${file.replace(".key", "")}_decrypted_${timeString}.txt`, decryptedData);
+                    writeFile(Path.join(__dirname + "/../exports/"), `${file.replace(".key", "")}_decrypted_${timeString}.txt`, decryptedData);
                     decryptedData = "";
                 }
             });
@@ -81,7 +101,7 @@ function confirmExportWallet() {
 function confirmDeleteWallet() {
     //@ts-expect-error
     let enteredPassword = document.getElementById("password-text-delete-wallet").value;
-    let hashedPassword = (0, CommonFunctions_1.readFile)(Path.join(__dirname + "/../wallets/hashed_password.txt"));
+    let hashedPassword = readFile(Path.join(__dirname + "/../wallets/hashed_password.txt"));
     if (hashedPassword === null) {
         document.getElementById("feedback-text-delete-wallet").textContent = "No wallet data found! It has most likely already been deleted!";
         document.getElementById("feedback-text-delete-wallet").style.color = "red";

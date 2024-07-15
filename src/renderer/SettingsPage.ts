@@ -5,8 +5,27 @@
 import * as FS from "fs";
 import * as Path from "path";
 import * as CRYPTO_js_2 from "crypto-js";
-//@ts-expect-error
-import { writeFile, readFile } from "../dist/renderer/CommonFunctions";
+
+function writeFile(destinationFolder: string, fileName: string, data: string) {
+    if (FS.existsSync(destinationFolder)) {
+        FS.writeFile(`${destinationFolder}${fileName}`, data, function(err) {
+            if (err) throw err;
+        });
+    } else {
+        console.error("Error: Destination folder does not exist.");
+        return;
+    }
+}
+
+function readFile(filePath: string): any {
+    //Pretty self-explanatory
+    if (FS.existsSync(filePath)) {
+        return FS.readFileSync(`${filePath}`).toString();
+    } else {
+        console.error("Error: Destination folder does not exist.");
+        return;
+    }
+}
 
 function confirmExportWallet() {
     //@ts-expect-error

@@ -3,12 +3,12 @@
 import { app, ipcMain, BrowserWindow } from "electron";
 import * as path from "path";
 
-process.env.NODE_ENV = "production"; //Set this to "production" for prod. build and "development" for dev mode
+process.env.NODE_ENV = "production"; //Set this to "production" for prod build and "development" for dev mode
 
 let mainWindow: BrowserWindow;
 
 const isMacPlatform: boolean = process.platform === 'darwin';
-const isDevMode: boolean = process.env.NODE_ENV !== "development";
+const isDevMode: boolean = process.env.NODE_ENV !== "production";
 
 app.on("ready", createWindows);
 
