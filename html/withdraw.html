@@ -54,18 +54,17 @@
             <div class="card-body">
               <h5 class="card-title">Currency info</h5>
 
-              <div class="dropdown">
-                <button class="btn btn-primary dropdown-toggle" type="button" id="cryptoDropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-                  Select Crypto
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="cryptoDropdownMenuButton">
-                  <li><a class="dropdown-item" href="#" onclick="setCurrency('Bitcoin')">Bitcoin</a></li>
-                  <li><a class="dropdown-item" href="#" onclick="setCurrency('Ethereum')">Ethereum</a></li>
-                  <li><a class="dropdown-item" href="#" onclick="setCurrency('Solana')">Solana</a></li>
+              <br />
+              <p>Select Crypto:</p>
+              <div class="btn-toolbar">
+                <button class="btn btn-primary" style="margin-right: 10px;" onclick="setCurrency('Bitcoin')">Bitcoin</button>
+                <button class="btn btn-primary" style="margin-right: 10px;" onclick="setCurrency('Ethereum')">Ethereum</button>
+                <button class="btn btn-primary" style="margin-right: 10px;" onclick="setCurrency('Solana')">Solana</button>
 
-                  <!--Uncomment to reenable sepolia ethereum-->
-                  <!--li><a class="dropdown-item" href="#" onclick="setCurrency('Sepolia Ethereum')">Sepolia Ethereum</a></li-->
-                </ul>
+                <div id="custom-asset-select-buttons"></div>
+
+                <!--Uncomment to reenable sepolia ethereum-->
+                <!--button class="btn btn-primary" onclick="setCurrency('Sepolia Ethereum')">Sepolia Ethereum</button-->
               </div>
 
               <br />

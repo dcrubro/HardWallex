@@ -15,7 +15,7 @@ HardWallex is a piece of software that you can use to create a hardware wallet o
 1. Clone the repo with **git clone https://github.com/dcrubro/HardWallex.git**
 2. Run ```cd HardWallex``` to change your directory into the **HardWallex** repository directory.
 3. Run ```npm install``` to download all required dependencies.
-4. Run electron builder with ```npx electron-builder -w```, changing the **-w** with **-l** for Linux and **-m** for macOS.
+4. Run the build with ```npm run build-win```, changing the **build-win** with **build-linux** for Linux and **build-mac** for macOS.
 5. You should have a directory in **build/** with the name **[platform]-unpacked/**
 6. Copy the directory to your device of choice.
 7. Enter the directory and navigate to resources/app/.
@@ -34,11 +34,14 @@ To update your wallet, simply follow the installation steps again and overwrite 
 - Wallet exporting
 - Wallet importing
 - AES Wallet encryption
+- Custom assets
 - **Note:** *This list is subject to change*
 
 ## Supported currencies
 - **Bitcoin** (BTC)
 - **Ethereum** (ETH)
+- **Solana** (SOL)
+- **All ERC-20 Tokens** (Ethereum)
 - **Note:** *This list is subject to change*
 
 <br>

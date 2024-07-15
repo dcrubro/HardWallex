@@ -27,3 +27,7 @@
     border-radius: 5px;
     margin-top: 20px;
 }
+
+.modal .dropdown-menu {
+    z-index: 1055; /* Higher than modal backdrop (1050) */
+}

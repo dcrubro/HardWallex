@@ -3,7 +3,7 @@
 import { app, ipcMain, BrowserWindow } from "electron";
 import * as path from "path";
 
-process.env.NODE_ENV = "production"; //Set this to "production" for prod. build and "development" for dev mode
+process.env.NODE_ENV = "production"; //Set this to "production" for prod build and "development" for dev mode
 
 let mainWindow: BrowserWindow;
 

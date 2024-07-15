@@ -12,20 +12,15 @@ import * as ECPair from "ecpair";
 import * as Bitcore from "bitcore-lib";
 import * as ecc from "tiny-secp256k1";
 import * as Solana from "@solana/web3.js";
+//@ts-expect-error
+import { writeFile, readFile, erc20ABI } from "../dist/renderer/CommonFunctions";
+
+const jsonCustomAssets: any[] = JSON.parse(readFile(path.join(__dirname + "/../wallets/customassets.json")));
 
 const sepoliaProvider: any = new Ethers.JsonRpcProvider("https://rpc2.sepolia.org/");
 const upperEthGasLimit: number = 0.00042;
 
 let selectedCurrency: string;
-
-function readFile(filePath: string): any {
-    if (fs.existsSync(filePath)) {
-        return fs.readFileSync(`${filePath}`).toString();
-    } else {
-        console.error("Error: Destination folder does not exist.");
-        return;
-    }
-}
 
 function updateConfirmModalData() {
     //@ts-expect-error
@@ -39,6 +34,18 @@ function updateConfirmModalData() {
     document.getElementById("sending-to-text").textContent = `Sending to: ${sendingTo}`;
     
     document.getElementById("sending-amount-text").textContent = `Send amount: ${sendingAmount}`;
+}
+
+function addCustomAssetsHTML() {
+    let customAssetWalletsHTMLDiv = document.getElementById("custom-asset-select-buttons");
+
+    //@ts-expect-error
+    jsonCustomAssets.Assets.forEach(asset => {
+        let htmlToAppend = 
+            `<button class="btn btn-primary" style="margin-right: 10px;" onclick="setCurrency('${asset.TokenName}')">${asset.TokenName}</button>`;
+
+        customAssetWalletsHTMLDiv.innerHTML += htmlToAppend;
+    });
 }
 
 function setCurrency(currency: string) {
@@ -64,6 +71,10 @@ async function fetchBTCTransactionHex(txId: string) {
 async function confirmSendCrypto() {
     
     document.getElementById("feedback-text").style.display = "none";
+
+    document.getElementById("feedback-text").textContent = "Pending...";
+    document.getElementById("feedback-text").style.color = "orange";
+    document.getElementById("feedback-text").style.display = "block";
 
     //@ts-expect-error
     let enteredPassword: string = document.getElementById("password-text").value;
@@ -179,7 +190,7 @@ async function confirmSendCrypto() {
             window.open(`https://sepolia.etherscan.io/tx/${signedTX.hash}`);
         }*/
 
-        if (selectedCurrency === "Bitcoin") {
+        else if (selectedCurrency === "Bitcoin") {
             let encryptedWIF: string = readFile(path.join(__dirname + "/../wallets/btc_private.key"));
             let decryptedWIF: string = CryptoJS.enc.Utf8.stringify(CryptoJS.AES.decrypt(encryptedWIF.replace(" (ENCRYPTED)", ""), enteredPassword));
 
@@ -301,7 +312,7 @@ async function confirmSendCrypto() {
             }
         }
 
-        if (selectedCurrency === "Solana") {
+        else if (selectedCurrency === "Solana") {
             let encryptedMnemonic: string = readFile(path.join(__dirname + "/../wallets/mnemonic.txt"));
             let decryptedMnemonic: string = CryptoJS.enc.Utf8.stringify(CryptoJS.AES.decrypt(encryptedMnemonic.replace(" (ENCRYPTED)", ""), enteredPassword));
 
@@ -348,6 +359,77 @@ async function confirmSendCrypto() {
                 console.error("Error broadcasting transaction:", error);
             }
         }
+
+        else {
+            //Here we assume that the user is trying to send a token.
+
+            let contractAddress;
+            let network;
+
+            //Here we loop through every asset in out JSON file, until we find the correct asset details.
+            //@ts-expect-error
+            jsonCustomAssets.Assets.forEach(asset => {
+                if (asset.TokenName === selectedCurrency) {
+                    contractAddress = asset.TokenContractAddress;
+                    network = asset.TokenNetwork;
+
+                    //NOTE: Potential bug. If the user defines multiple tokens with the same exact name, the token sent might be incorrect.
+                }
+            });
+
+            if (network === "Ethereum") {
+                let encryptedPriv: string = readFile(path.join(__dirname + "/../wallets/eth_private.key"));
+                let decryptedPriv: string = CryptoJS.enc.Utf8.stringify(CryptoJS.AES.decrypt(encryptedPriv.replace(" (ENCRYPTED)", ""), enteredPassword));
+
+                //Ethers.js snippet for transaction creation
+                let wallet = new Ethers.Wallet(decryptedPriv, Ethers.getDefaultProvider());
+                let contract = new Ethers.Contract(contractAddress, erc20ABI, wallet);
+                
+                let decimals = await contract.decimals();
+                //@ts-expect-error
+                let sendAmount = parseFloat(document.getElementById("send-amount").value.toString());
+                let tokenBalance = parseFloat(Ethers.formatUnits(await contract.balanceOf(wallet.address), decimals));
+
+                if (tokenBalance < sendAmount) {
+                    //Make sure that the sender has enough tokens.
+
+                    console.log("Sender does not have enough tokens to send transaction! Aborting.")
+
+                    document.getElementById("feedback-text").textContent = "Error sending transaction. You have insufficient funds.";
+                    document.getElementById("feedback-text").style.color = "red";
+                    document.getElementById("feedback-text").style.display = "block";
+
+                    return;
+                }
+
+                try {
+                    //@ts-expect-error
+                    contract.transfer(document.getElementById("destination-address").value.toString(), Ethers.parseUnits(sendAmount.toString(), decimals))
+                        .then(function(tx) {
+                            if (tx.hash) {
+                                //Success
+                                console.log(`TX Hash: ${tx.hash}`);
+
+                                document.getElementById("feedback-text").textContent = "Transaction sent successfully!";
+                                document.getElementById("feedback-text").style.color = "green";
+                                document.getElementById("feedback-text").style.display = "block";
+
+                                //Open the Etherscan window
+                                window.open(`https://etherscan.io/tx/${tx.hash}`);
+                            }
+                    });
+    
+                    decryptedPriv = "";
+
+                } catch (error) {
+                    console.error(`Error sending transaction: ${error}`);
+    
+                    document.getElementById("feedback-text").textContent = "Error sending transaction. Check that you have sufficent funds, otherwise try again later.";
+                    document.getElementById("feedback-text").style.color = "red";
+                    document.getElementById("feedback-text").style.display = "block";
+                }
+            }
+        }
     } else {
         //Passwords do not match
         
@@ -366,6 +448,8 @@ async function confirmSendCrypto() {
     }, 1000);
     */
 }
+
+addCustomAssetsHTML();
 
 //Event listeners
 //@ts-expect-error

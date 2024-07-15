@@ -29,23 +29,22 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const FS = __importStar(require("fs"));
 const Path = __importStar(require("path"));
 const CRYPTO_js_2 = __importStar(require("crypto-js"));
-function readFile(filePath) {
-    //Pretty self-explanatory
-    if (FS.existsSync(filePath)) {
-        return FS.readFileSync(`${filePath}`).toString();
+function writeFile(destinationFolder, fileName, data) {
+    if (FS.existsSync(destinationFolder)) {
+        FS.writeFile(`${destinationFolder}${fileName}`, data, function (err) {
+            if (err)
+                throw err;
+        });
     }
     else {
         console.error("Error: Destination folder does not exist.");
         return;
     }
 }
-function writeFile(destinationFolder, fileName, data) {
+function readFile(filePath) {
     //Pretty self-explanatory
-    if (FS.existsSync(destinationFolder)) {
-        FS.writeFile(`${destinationFolder}${fileName}`, data, function (err) {
-            if (err)
-                throw err;
-        });
+    if (FS.existsSync(filePath)) {
+        return FS.readFileSync(`${filePath}`).toString();
     }
     else {
         console.error("Error: Destination folder does not exist.");

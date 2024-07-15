@@ -38,6 +38,8 @@ const BIP32 = __importStar(require("bip32"));
 const BitcoinJS = __importStar(require("bitcoinjs-lib"));
 const ecc = __importStar(require("tiny-secp256k1"));
 const Solana = __importStar(require("@solana/web3.js"));
+//@ts-expect-error
+const CommonFunctions_1 = require("../dist/renderer/CommonFunctions");
 let mnemonic;
 function generateMnemonicPhrase() {
     const mnemonic = BIP39.generateMnemonic();
@@ -72,28 +74,6 @@ function generateSOLWallet(mnemonic) {
     };
     return data;
 }
-function writeFile(destinationFolder, fileName, data) {
-    if (fs.existsSync(destinationFolder)) {
-        fs.writeFile(`${destinationFolder}${fileName}`, data, function (err) {
-            if (err)
-                throw err;
-        });
-    }
-    else {
-        console.error("Error: Destination folder does not exist.");
-        return;
-    }
-}
-function readFile(filePath) {
-    //Pretty self-explanatory
-    if (fs.existsSync(filePath)) {
-        return fs.readFileSync(`${filePath}`).toString();
-    }
-    else {
-        console.error("Error: Destination folder does not exist.");
-        return;
-    }
-}
 function getWalletInfo() {
     document.getElementById("walletInfoDiv").style.display = "block";
     mnemonic = generateMnemonicPhrase();
@@ -127,18 +107,25 @@ function confirmCreateWallet() {
             let hashedPassword = crypto_js_1.default.SHA256(enteredPassword).toString();
             let encryptedMnemonic = `${crypto_js_1.default.AES.encrypt(mnemonic, enteredPassword)} (ENCRYPTED)`;
             let encryptedPrivateKey = `${crypto_js_1.default.AES.encrypt(ethData.private, enteredPassword)} (ENCRYPTED)`;
-            writeFile(path_1.default.join(__dirname + "/../wallets/"), "eth_address.pem", ethData.address);
-            writeFile(path_1.default.join(__dirname + "/../wallets/"), "eth_private.key", encryptedPrivateKey);
-            writeFile(path_1.default.join(__dirname + "/../wallets/"), "hashed_password.txt", hashedPassword);
-            writeFile(path_1.default.join(__dirname + "/../wallets/"), "mnemonic.txt", encryptedMnemonic);
+            (0, CommonFunctions_1.writeFile)(path_1.default.join(__dirname + "/../wallets/"), "eth_address.pem", ethData.address);
+            (0, CommonFunctions_1.writeFile)(path_1.default.join(__dirname + "/../wallets/"), "eth_private.key", encryptedPrivateKey);
+            (0, CommonFunctions_1.writeFile)(path_1.default.join(__dirname + "/../wallets/"), "hashed_password.txt", hashedPassword);
+            (0, CommonFunctions_1.writeFile)(path_1.default.join(__dirname + "/../wallets/"), "mnemonic.txt", encryptedMnemonic);
             let btcData = generateBTCWallet(mnemonic);
             encryptedPrivateKey = `${crypto_js_1.default.AES.encrypt(btcData.private, enteredPassword)} (ENCRYPTED)`;
-            writeFile(path_1.default.join(__dirname + "/../wallets/"), "btc_address.pem", btcData.address);
-            writeFile(path_1.default.join(__dirname + "/../wallets/"), "btc_private.key", encryptedPrivateKey);
+            (0, CommonFunctions_1.writeFile)(path_1.default.join(__dirname + "/../wallets/"), "btc_address.pem", btcData.address);
+            (0, CommonFunctions_1.writeFile)(path_1.default.join(__dirname + "/../wallets/"), "btc_private.key", encryptedPrivateKey);
             let solData = generateSOLWallet(mnemonic);
             encryptedPrivateKey = `${crypto_js_1.default.AES.encrypt(solData.private, enteredPassword)} (ENCRYPTED)`;
-            writeFile(path_1.default.join(__dirname + "/../wallets/"), "sol_address.pem", solData.address);
-            writeFile(path_1.default.join(__dirname + "/../wallets/"), "sol_private.key", encryptedPrivateKey);
+            (0, CommonFunctions_1.writeFile)(path_1.default.join(__dirname + "/../wallets/"), "sol_address.pem", solData.address);
+            (0, CommonFunctions_1.writeFile)(path_1.default.join(__dirname + "/../wallets/"), "sol_private.key", encryptedPrivateKey);
+            //Create base JSON file for custom assets
+            let customAssetData = {
+                "Assets": []
+            };
+            if (!fs.existsSync(path_1.default.join(__dirname + "/../wallets/customassets.json"))) {
+                (0, CommonFunctions_1.writeFile)(path_1.default.join(__dirname + "/../wallets/"), "customassets.json", JSON.stringify(customAssetData));
+            }
             document.getElementById("feedback-text").textContent = "Wallet creation successful!";
             document.getElementById("feedback-text").style.color = "green";
             document.getElementById("feedback-text").style.display = "block";
@@ -161,7 +148,7 @@ function confirmImportWallet(readFromSettingsPage) {
         //We are probably reimporting via the settings page
         //@ts-expect-error
         enteredPassword = document.getElementById("password-text-reimport-wallet").value;
-        enteredConfirmPassword = readFile(path_1.default.join(__dirname + "/../wallets/hashed_password.txt"));
+        enteredConfirmPassword = (0, CommonFunctions_1.readFile)(path_1.default.join(__dirname + "/../wallets/hashed_password.txt"));
     }
     if (/\s/.test(enteredPassword) || enteredPassword === "") {
         //Invalid password
@@ -191,7 +178,7 @@ function confirmImportWallet(readFromSettingsPage) {
                 readMnemonic = document.getElementById("mnemonic-phrase-text").value;
             }
             else {
-                let temp = readFile(path_1.default.join(__dirname + "/../wallets/mnemonic.txt"));
+                let temp = (0, CommonFunctions_1.readFile)(path_1.default.join(__dirname + "/../wallets/mnemonic.txt"));
                 readMnemonic = crypto_js_1.default.enc.Utf8.stringify(crypto_js_1.default.AES.decrypt(temp.replace(" (ENCRYPTED)", ""), enteredPassword));
             }
             //All validities passed
@@ -200,18 +187,25 @@ function confirmImportWallet(readFromSettingsPage) {
             let hashedPassword = crypto_js_1.default.SHA256(enteredPassword).toString();
             let encryptedMnemonic = `${crypto_js_1.default.AES.encrypt(readMnemonic, enteredPassword)} (ENCRYPTED)`;
             let encryptedPrivateKey = `${crypto_js_1.default.AES.encrypt(data.private, enteredPassword)} (ENCRYPTED)`;
-            writeFile(path_1.default.join(__dirname + "/../wallets/"), "eth_address.pem", data.address);
-            writeFile(path_1.default.join(__dirname + "/../wallets/"), "eth_private.key", encryptedPrivateKey);
-            writeFile(path_1.default.join(__dirname + "/../wallets/"), "hashed_password.txt", hashedPassword);
-            writeFile(path_1.default.join(__dirname + "/../wallets/"), "mnemonic.txt", encryptedMnemonic);
+            (0, CommonFunctions_1.writeFile)(path_1.default.join(__dirname + "/../wallets/"), "eth_address.pem", data.address);
+            (0, CommonFunctions_1.writeFile)(path_1.default.join(__dirname + "/../wallets/"), "eth_private.key", encryptedPrivateKey);
+            (0, CommonFunctions_1.writeFile)(path_1.default.join(__dirname + "/../wallets/"), "hashed_password.txt", hashedPassword);
+            (0, CommonFunctions_1.writeFile)(path_1.default.join(__dirname + "/../wallets/"), "mnemonic.txt", encryptedMnemonic);
             let btcData = generateBTCWallet(readMnemonic);
             encryptedPrivateKey = `${crypto_js_1.default.AES.encrypt(btcData.private, enteredPassword)} (ENCRYPTED)`;
-            writeFile(path_1.default.join(__dirname + "/../wallets/"), "btc_address.pem", btcData.address);
-            writeFile(path_1.default.join(__dirname + "/../wallets/"), "btc_private.key", encryptedPrivateKey);
+            (0, CommonFunctions_1.writeFile)(path_1.default.join(__dirname + "/../wallets/"), "btc_address.pem", btcData.address);
+            (0, CommonFunctions_1.writeFile)(path_1.default.join(__dirname + "/../wallets/"), "btc_private.key", encryptedPrivateKey);
             let solData = generateSOLWallet(readMnemonic);
             encryptedPrivateKey = `${crypto_js_1.default.AES.encrypt(solData.private, enteredPassword)} (ENCRYPTED)`;
-            writeFile(path_1.default.join(__dirname + "/../wallets/"), "sol_address.pem", solData.address);
-            writeFile(path_1.default.join(__dirname + "/../wallets/"), "sol_private.key", encryptedPrivateKey);
+            (0, CommonFunctions_1.writeFile)(path_1.default.join(__dirname + "/../wallets/"), "sol_address.pem", solData.address);
+            (0, CommonFunctions_1.writeFile)(path_1.default.join(__dirname + "/../wallets/"), "sol_private.key", encryptedPrivateKey);
+            //Create base JSON file for custom assets
+            let customAssetData = {
+                "Assets": []
+            };
+            if (!fs.existsSync(path_1.default.join(__dirname + "/../wallets/customassets.json"))) {
+                (0, CommonFunctions_1.writeFile)(path_1.default.join(__dirname + "/../wallets/"), "customassets.json", JSON.stringify(customAssetData));
+            }
             if (!readFromSettingsPage) {
                 document.getElementById("feedback-text").textContent = "Wallet import successful!";
                 document.getElementById("feedback-text").style.color = "green";

@@ -37,7 +37,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const fs = __importStar(require("fs"));
 const path_1 = __importDefault(require("path"));
 const crypto_js_1 = __importDefault(require("crypto-js"));
 const Ethers = __importStar(require("ethers"));
@@ -46,18 +45,12 @@ const BitcoinJS = __importStar(require("bitcoinjs-lib"));
 const ECPair = __importStar(require("ecpair"));
 const ecc = __importStar(require("tiny-secp256k1"));
 const Solana = __importStar(require("@solana/web3.js"));
+//@ts-expect-error
+const CommonFunctions_1 = require("../dist/renderer/CommonFunctions");
+const jsonCustomAssets = JSON.parse((0, CommonFunctions_1.readFile)(path_1.default.join(__dirname + "/../wallets/customassets.json")));
 const sepoliaProvider = new Ethers.JsonRpcProvider("https://rpc2.sepolia.org/");
 const upperEthGasLimit = 0.00042;
 let selectedCurrency;
-function readFile(filePath) {
-    if (fs.existsSync(filePath)) {
-        return fs.readFileSync(`${filePath}`).toString();
-    }
-    else {
-        console.error("Error: Destination folder does not exist.");
-        return;
-    }
-}
 function updateConfirmModalData() {
     //@ts-expect-error
     let sendingTo = document.getElementById("destination-address").value;
@@ -66,6 +59,14 @@ function updateConfirmModalData() {
     document.getElementById("currency-text").textContent = `Currency: ${selectedCurrency}`;
     document.getElementById("sending-to-text").textContent = `Sending to: ${sendingTo}`;
     document.getElementById("sending-amount-text").textContent = `Send amount: ${sendingAmount}`;
+}
+function addCustomAssetsHTML() {
+    let customAssetWalletsHTMLDiv = document.getElementById("custom-asset-select-buttons");
+    //@ts-expect-error
+    jsonCustomAssets.Assets.forEach(asset => {
+        let htmlToAppend = `<button class="btn btn-primary" style="margin-right: 10px;" onclick="setCurrency('${asset.TokenName}')">${asset.TokenName}</button>`;
+        customAssetWalletsHTMLDiv.innerHTML += htmlToAppend;
+    });
 }
 function setCurrency(currency) {
     selectedCurrency = currency;
@@ -89,9 +90,12 @@ function fetchBTCTransactionHex(txId) {
 function confirmSendCrypto() {
     return __awaiter(this, void 0, void 0, function* () {
         document.getElementById("feedback-text").style.display = "none";
+        document.getElementById("feedback-text").textContent = "Pending...";
+        document.getElementById("feedback-text").style.color = "orange";
+        document.getElementById("feedback-text").style.display = "block";
         //@ts-expect-error
         let enteredPassword = document.getElementById("password-text").value;
-        let hashedPassword = yield readFile(path_1.default.join(__dirname + "/../wallets/hashed_password.txt"));
+        let hashedPassword = yield (0, CommonFunctions_1.readFile)(path_1.default.join(__dirname + "/../wallets/hashed_password.txt"));
         //@ts-expect-error
         let destinationAddress = document.getElementById("destination-address").value;
         //@ts-expect-error
@@ -120,7 +124,7 @@ function confirmSendCrypto() {
         if (crypto_js_1.default.SHA256(enteredPassword).toString() === hashedPassword) {
             //Passwords match
             if (selectedCurrency === "Ethereum") {
-                let encryptedPriv = readFile(path_1.default.join(__dirname + "/../wallets/eth_private.key"));
+                let encryptedPriv = (0, CommonFunctions_1.readFile)(path_1.default.join(__dirname + "/../wallets/eth_private.key"));
                 let decryptedPriv = crypto_js_1.default.enc.Utf8.stringify(crypto_js_1.default.AES.decrypt(encryptedPriv.replace(" (ENCRYPTED)", ""), enteredPassword));
                 //@ts-expect-error
                 let adjustedForGas = parseFloat(document.getElementById("send-amount").value.toString()) - upperEthGasLimit;
@@ -177,10 +181,10 @@ function confirmSendCrypto() {
                 //Open the Etherscan window
                 window.open(`https://sepolia.etherscan.io/tx/${signedTX.hash}`);
             }*/
-            if (selectedCurrency === "Bitcoin") {
-                let encryptedWIF = readFile(path_1.default.join(__dirname + "/../wallets/btc_private.key"));
+            else if (selectedCurrency === "Bitcoin") {
+                let encryptedWIF = (0, CommonFunctions_1.readFile)(path_1.default.join(__dirname + "/../wallets/btc_private.key"));
                 let decryptedWIF = crypto_js_1.default.enc.Utf8.stringify(crypto_js_1.default.AES.decrypt(encryptedWIF.replace(" (ENCRYPTED)", ""), enteredPassword));
-                let sourceAddress = readFile(path_1.default.join(__dirname + "/../wallets/btc_address.pem"));
+                let sourceAddress = (0, CommonFunctions_1.readFile)(path_1.default.join(__dirname + "/../wallets/btc_address.pem"));
                 const NETWORK = BitcoinJS.networks.bitcoin;
                 //Get the UTXOs
                 let utxos = [];
@@ -271,8 +275,8 @@ function confirmSendCrypto() {
                     }
                 }
             }
-            if (selectedCurrency === "Solana") {
-                let encryptedMnemonic = readFile(path_1.default.join(__dirname + "/../wallets/mnemonic.txt"));
+            else if (selectedCurrency === "Solana") {
+                let encryptedMnemonic = (0, CommonFunctions_1.readFile)(path_1.default.join(__dirname + "/../wallets/mnemonic.txt"));
                 let decryptedMnemonic = crypto_js_1.default.enc.Utf8.stringify(crypto_js_1.default.AES.decrypt(encryptedMnemonic.replace(" (ENCRYPTED)", ""), enteredPassword));
                 //Connect to the Solana network/cluster
                 let connection = new Solana.Connection(Solana.clusterApiUrl("mainnet-beta"), "confirmed");
@@ -306,6 +310,61 @@ function confirmSendCrypto() {
                     console.error("Error broadcasting transaction:", error);
                 }
             }
+            else {
+                //Here we assume that the user is trying to send a token.
+                let contractAddress;
+                let network;
+                //Here we loop through every asset in out JSON file, until we find the correct asset details.
+                //@ts-expect-error
+                jsonCustomAssets.Assets.forEach(asset => {
+                    if (asset.TokenName === selectedCurrency) {
+                        contractAddress = asset.TokenContractAddress;
+                        network = asset.TokenNetwork;
+                        //NOTE: Potential bug. If the user defines multiple tokens with the same exact name, the token sent might be incorrect.
+                    }
+                });
+                if (network === "Ethereum") {
+                    let encryptedPriv = (0, CommonFunctions_1.readFile)(path_1.default.join(__dirname + "/../wallets/eth_private.key"));
+                    let decryptedPriv = crypto_js_1.default.enc.Utf8.stringify(crypto_js_1.default.AES.decrypt(encryptedPriv.replace(" (ENCRYPTED)", ""), enteredPassword));
+                    //Ethers.js snippet for transaction creation
+                    let wallet = new Ethers.Wallet(decryptedPriv, Ethers.getDefaultProvider());
+                    let contract = new Ethers.Contract(contractAddress, CommonFunctions_1.erc20ABI, wallet);
+                    let decimals = yield contract.decimals();
+                    //@ts-expect-error
+                    let sendAmount = parseFloat(document.getElementById("send-amount").value.toString());
+                    let tokenBalance = parseFloat(Ethers.formatUnits(yield contract.balanceOf(wallet.address), decimals));
+                    if (tokenBalance < sendAmount) {
+                        //Make sure that the sender has enough tokens.
+                        console.log("Sender does not have enough tokens to send transaction! Aborting.");
+                        document.getElementById("feedback-text").textContent = "Error sending transaction. You have insufficient funds.";
+                        document.getElementById("feedback-text").style.color = "red";
+                        document.getElementById("feedback-text").style.display = "block";
+                        return;
+                    }
+                    try {
+                        //@ts-expect-error
+                        contract.transfer(document.getElementById("destination-address").value.toString(), Ethers.parseUnits(sendAmount.toString(), decimals))
+                            .then(function (tx) {
+                            if (tx.hash) {
+                                //Success
+                                console.log(`TX Hash: ${tx.hash}`);
+                                document.getElementById("feedback-text").textContent = "Transaction sent successfully!";
+                                document.getElementById("feedback-text").style.color = "green";
+                                document.getElementById("feedback-text").style.display = "block";
+                                //Open the Etherscan window
+                                window.open(`https://etherscan.io/tx/${tx.hash}`);
+                            }
+                        });
+                        decryptedPriv = "";
+                    }
+                    catch (error) {
+                        console.error(`Error sending transaction: ${error}`);
+                        document.getElementById("feedback-text").textContent = "Error sending transaction. Check that you have sufficent funds, otherwise try again later.";
+                        document.getElementById("feedback-text").style.color = "red";
+                        document.getElementById("feedback-text").style.display = "block";
+                    }
+                }
+            }
         }
         else {
             //Passwords do not match
@@ -321,6 +380,7 @@ function confirmSendCrypto() {
         */
     });
 }
+addCustomAssetsHTML();
 //Event listeners
 //@ts-expect-error
 document.getElementById("updateConfirmModalData").addEventListener("click", updateConfirmModalData());

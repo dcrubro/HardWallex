@@ -27,7 +27,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 //Written by DcruBro @ https://dcrubro.com/
 const electron_1 = require("electron");
 const path = __importStar(require("path"));
-process.env.NODE_ENV = "production"; //Set this to "production" for prod. build and "development" for dev mode
+process.env.NODE_ENV = "production"; //Set this to "production" for prod build and "development" for dev mode
 let mainWindow;
 const isMacPlatform = process.platform === 'darwin';
 const isDevMode = process.env.NODE_ENV !== "production";
