@@ -16,9 +16,9 @@ HardWallex is a piece of software that you can use to create a hardware wallet o
 2. Run ```cd HardWallex``` to change your directory into the **HardWallex** repository directory.
 3. Run ```npm install``` to download all required dependencies.
 4. Run the build with ```npm run build-win```, changing the **build-win** with **build-linux** for Linux and **build-mac** for macOS.
-5. You should have a directory in **build/** with the name **[platform]-unpacked/**
+5. You should have a directory in **build/** with the name **[platform]-unpacked/** (This will most likely be called **mac-arm64/amd64** on macOS).
 6. Copy the directory to your device of choice.
-7. Enter the directory and navigate to resources/app/.
+7. Enter the directory and navigate to **resources/app/** (On macOS, you'll need to show the package contents, and navigate to **Contents/Resources/app**).
 8. Create two directories: **wallets** and **exports**.
 9. Run the executable in the main directory.
 - *Note that you may have to modify the source if you choose this method. You also must have node.js and npm installed.*
