@@ -173,6 +173,7 @@ localStorage.setItem("solAddress", getWalletData(path_1.default.join(__dirname +
 //HTML code segment
 function setHTMLObjects() {
     return __awaiter(this, void 0, void 0, function* () {
+        let totalBalance = 0;
         //On Content Load
         ethBalance = yield getETHWalletBalance(localStorage.getItem("ethAddress").toString());
         //sepEthBalance = await getSepETHWalletBalance(localStorage.getItem("ethAddress").toString());
@@ -184,6 +185,8 @@ function setHTMLObjects() {
         document.getElementById("ethWalletBalance").textContent = `ETH Balance: ${ethBalance} ETH`;
         //@ts-expect-error
         document.getElementById("ethWalletBalanceValue").textContent = `USD Value: $${yield getUSDValue(ethBalance, localStorage.getItem("ethPrice")).toFixed(2)}`;
+        //@ts-expect-error
+        totalBalance += parseFloat(yield getUSDValue(ethBalance, localStorage.getItem("ethPrice")).toFixed(2));
         drawQRCode(ethAddr, "eth-address-qrcode");
         //Uncomment to reenable sepolia ethereum
         ///*SEPOLIA ETHEREUM*/
@@ -199,6 +202,8 @@ function setHTMLObjects() {
         document.getElementById("btcWalletBalance").textContent = `BTC Balance: ${btcBalance} BTC`;
         //@ts-expect-error
         document.getElementById("btcWalletBalanceValue").textContent = `USD Value: $${yield getUSDValue(btcBalance, localStorage.getItem("btcPrice")).toFixed(2)}`;
+        //@ts-expect-error
+        totalBalance += parseFloat(yield getUSDValue(btcBalance, localStorage.getItem("btcPrice")).toFixed(2));
         drawQRCode(btcAddr, "btc-address-qrcode");
         /*SOLANA*/
         let solAddr = yield localStorage.getItem("solAddress");
@@ -206,7 +211,10 @@ function setHTMLObjects() {
         document.getElementById("solWalletBalance").textContent = `SOL Balance: ${solBalance} SOL`;
         //@ts-expect-error
         document.getElementById("solWalletBalanceValue").textContent = `USD Value: $${yield getUSDValue(solBalance, localStorage.getItem("solPrice")).toFixed(2)}`;
+        //@ts-expect-error
+        totalBalance += parseFloat(yield getUSDValue(solBalance, localStorage.getItem("solPrice")).toFixed(2));
         drawQRCode(solAddr, "sol-address-qrcode");
+        return { "totalBalance": totalBalance };
     });
 }
 function checkWalletExistance() {
@@ -284,6 +292,7 @@ function confirmAddCustomAsset() {
 }
 function getCustomAssets() {
     return __awaiter(this, void 0, void 0, function* () {
+        let totalBalance = 0;
         let jsonCustomAssets = JSON.parse((0, CommonFunctions_1.readFile)(path_1.default.join(__dirname + "/../wallets/customassets.json")));
         let customAssetWalletsHTMLDiv = document.getElementById("custom-assets");
         //Fetch all asset data
@@ -333,13 +342,22 @@ function getCustomAssets() {
             </div>
         </div>
         <br />`;
+            totalBalance += assetObject.tokenInfo.price !== false ? getUSDValue((assetObject.balance / (10 ** parseInt(assetObject.tokenInfo.decimals))), assetObject.tokenInfo.price.rate) : 0;
             //Append the HTML to the "custom-assets" div
             customAssetWalletsHTMLDiv.innerHTML += htmlToAppend;
         });
+        return { "totalBalance": totalBalance };
     });
 }
 function goToImportWallet() { window.location.href = "./walletimport.html"; }
 function goToCreateWallet() { window.location.href = "./walletcreation.html"; }
 checkWalletExistance();
-getCustomAssets();
-setHTMLObjects();
+let balance1 = getCustomAssets();
+let balance2 = setHTMLObjects();
+let finalBalance = () => __awaiter(void 0, void 0, void 0, function* () {
+    const totalWalletBalanceObject = document.getElementById("total-wallet-usd-value-text");
+    let final = (yield balance1).totalBalance + (yield balance2).totalBalance;
+    document.getElementById("data-loading-spinner").style.visibility = "hidden";
+    totalWalletBalanceObject.textContent = `Total Wallet Balance: $${final}`;
+});
+finalBalance();
