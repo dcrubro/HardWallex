@@ -8,6 +8,8 @@ import * as QRCode from "qrcode";
 import * as Solana from "@solana/web3.js";
 //@ts-expect-error
 import { writeFile, readFile } from "../dist/renderer/CommonFunctions";
+//@ts-expect-error
+import { getBTCWalletBalance, getETHWalletBalance, getSOLWalletBalance, getEthplorerWalletBalance, getWalletData } from "../dist/renderer/BalanceReader";
 
 let ethBalance: number;
 let sepEthBalance: number;
@@ -15,115 +17,8 @@ let btcBalance: number;
 let solBalance: number;
 
 //Functions segment
-async function getEthplorerWalletBalance(address: string): Promise<any> {
-    //I know you're not supposed to leak API keys like this, but I don't really care about this one, since I got it for free.
-    const url = `https://api.ethplorer.io/getAddressInfo/${address}?apiKey=EK-kyBsC-yEYfC55-31WJm`;
-    
-    try {
-        const response = await fetch(url);
-        const data = await response.json();
-
-        if (data) {
-            return data;
-        } else {
-            console.log("Error occurred while fetching ETH Wallet balance. Please check the Ethereum address or try again later.");
-            throw new Error(data.message);
-        }
-    } catch (error) {
-        console.log("Error occurred while fetching ETH Wallet balance. Please check the Ethereum address or try again later.");
-        throw error;
-    }
-}
-
-async function getETHWalletBalance(address: string): Promise<number> {
-    const data = await getEthplorerWalletBalance(address);
-
-    return data.ETH.balance;
-}
-
-async function getSOLWalletBalance(address: string): Promise<number> {
-    const url = `${Solana.clusterApiUrl("mainnet-beta")}`;
-    const body = {
-        "jsonrpc": "2.0",
-        "id": 1,
-        "method": "getBalance",
-        "params": [
-            address,
-            {
-                "commitment": "confirmed"
-            }
-        ]
-    };
-    
-    try {
-        const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-        const data = await response.json();
-
-        if (data) {
-            const solBal = data.result.value / 1e9; // Convert lamports to SOL
-            return solBal;
-        } else {
-            console.log("Error occurred while fetching balance. Please check the Ethereum address or try again later.");
-            throw new Error(data.message);
-        }
-    } catch (error) {
-        console.log("Error occurred while fetching balance. Please check the Ethereum address or try again later.");
-        throw error;
-    }
-}
-
-async function getSepETHWalletBalance(address: string): Promise<number> {
-    const url = `${localStorage.getItem("sepEtherscanBaseUrl")}/?module=account&action=balance&address=${address}&tag=latest&apikey=${localStorage.getItem("etherscanAPIkey")}`;
-    
-    try {
-        const response = await fetch(url);
-        const data = await response.json();
-
-        if (data.status === "1") {
-            const balanceInWei = parseInt(data.result);
-            const balanceInEth = balanceInWei / 1e18; //Convert wei to Ether
-            return balanceInEth;
-        } else {
-            console.log("Error occurred while fetching balance. Please check the Ethereum address or try again later.");
-            throw new Error(data.message);
-        }
-    } catch (error) {
-        console.log("Error occurred while fetching balance. Please check the Ethereum address or try again later.");
-        throw error;
-    }
-}
-
-async function getBTCWalletBalance(address: string): Promise<number> {
-    const url = `https://api.blockcypher.com/v1/btc/main/addrs/${address}`;
-
-    let balance: number = 0;
-
-    try {
-        const response = await fetch(url);
-        const data = await response.json();
-
-        balance = data.balance / (10**8);
-    } catch (err) {
-        console.error("Error occurred while fetching balance. Please check the Bitcoin address or try again later.", err);
-
-        return;
-    }
-
-    return balance;
-}
-
 function getUSDValue(ownedAmount: number, currencyValue: number) {
     return ownedAmount * currencyValue;
-}
-
-function getWalletData(path: string): string {
-    if (fs.existsSync(path)) {
-        const data = fs.readFileSync(path);
-        return data.toString();
-    } else {
-        console.log("Error when reading wallet data (path may be invalid)");
-        return "NULL";
-    }
 }
 
 function drawQRCode(content, canvasId) {
@@ -140,8 +35,9 @@ localStorage.setItem("solAddress", getWalletData(path.join(__dirname + "/../wall
 //HTML code segment
 
 async function setHTMLObjects() {
+    let totalBalance: number = 0;
+
     //On Content Load
-    
     ethBalance = await getETHWalletBalance(localStorage.getItem("ethAddress").toString());
     //sepEthBalance = await getSepETHWalletBalance(localStorage.getItem("ethAddress").toString());
     btcBalance = await getBTCWalletBalance(localStorage.getItem("btcAddress").toString());
@@ -155,7 +51,8 @@ async function setHTMLObjects() {
     document.getElementById("ethWalletBalance").textContent = `ETH Balance: ${ethBalance} ETH`;
     //@ts-expect-error
     document.getElementById("ethWalletBalanceValue").textContent = `USD Value: $${await getUSDValue(ethBalance, localStorage.getItem("ethPrice")).toFixed(2)}`;
-    
+    //@ts-expect-error
+    totalBalance += parseFloat(await getUSDValue(ethBalance, localStorage.getItem("ethPrice")).toFixed(2));
     drawQRCode(ethAddr, "eth-address-qrcode");
 
 
@@ -176,7 +73,8 @@ async function setHTMLObjects() {
     document.getElementById("btcWalletBalance").textContent = `BTC Balance: ${btcBalance} BTC`;
     //@ts-expect-error
     document.getElementById("btcWalletBalanceValue").textContent = `USD Value: $${await getUSDValue(btcBalance, localStorage.getItem("btcPrice")).toFixed(2)}`;
-    
+    //@ts-expect-error
+    totalBalance += parseFloat(await getUSDValue(btcBalance, localStorage.getItem("btcPrice")).toFixed(2));
     drawQRCode(btcAddr, "btc-address-qrcode");
 
     /*SOLANA*/
@@ -187,8 +85,11 @@ async function setHTMLObjects() {
     document.getElementById("solWalletBalance").textContent = `SOL Balance: ${solBalance} SOL`;
     //@ts-expect-error
     document.getElementById("solWalletBalanceValue").textContent = `USD Value: $${await getUSDValue(solBalance, localStorage.getItem("solPrice")).toFixed(2)}`;
-    
+    //@ts-expect-error
+    totalBalance += parseFloat(await getUSDValue(solBalance, localStorage.getItem("solPrice")).toFixed(2));
     drawQRCode(solAddr, "sol-address-qrcode");
+
+    return { "totalBalance": totalBalance };
 }
 
 async function checkWalletExistance() {
@@ -277,10 +178,16 @@ async function confirmAddCustomAsset() {
         document.getElementById("add-custom-asset-feedback-text").textContent = "Successfully added the custom asset!";
         document.getElementById("add-custom-asset-feedback-text").style.color = "green";
         document.getElementById("add-custom-asset-feedback-text").style.display = "block";
+
+        setTimeout(function() {
+            window.location.href = "./wallets.html";
+        }, 1000);
     }
 }
 
 async function getCustomAssets() {
+    let totalBalance: number = 0;
+
     let jsonCustomAssets: any[] = JSON.parse(readFile(path.join(__dirname + "/../wallets/customassets.json")));
     let customAssetWalletsHTMLDiv = document.getElementById("custom-assets");
 
@@ -338,14 +245,27 @@ async function getCustomAssets() {
         </div>
         <br />`;
 
+        totalBalance += assetObject.tokenInfo.price !== false ? getUSDValue((assetObject.balance / (10 ** parseInt(assetObject.tokenInfo.decimals))), assetObject.tokenInfo.price.rate) : 0
+
         //Append the HTML to the "custom-assets" div
         customAssetWalletsHTMLDiv.innerHTML += htmlToAppend;
     });
+
+    return { "totalBalance": totalBalance }; 
 }
 
 function goToImportWallet() { window.location.href = "./walletimport.html"; }
 function goToCreateWallet() { window.location.href = "./walletcreation.html"; }
 
 checkWalletExistance();
-getCustomAssets();
-setHTMLObjects();
+let balance1 = getCustomAssets();
+let balance2 = setHTMLObjects();
+
+let finalBalance = async () => {
+    const totalWalletBalanceObject = document.getElementById("total-wallet-usd-value-text");
+    let final = (await balance1).totalBalance + (await balance2).totalBalance;
+    document.getElementById("data-loading-spinner").style.visibility = "hidden";
+    totalWalletBalanceObject.textContent = `Total Wallet Balance: $${final}`;
+}
+
+finalBalance();

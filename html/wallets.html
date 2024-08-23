@@ -38,6 +38,11 @@
                 Settings
               </a>
             </li>
+            <li class="nav-item">
+              <a href="./donate.html" class="nav-link">
+                Donate
+              </a>
+            </li>
           </ul>
           <div>
             <a href="https://dcrubro.com/" target="_blank" class="nav-link active" aria-current="page">
@@ -50,7 +55,14 @@
 
         <!--Bitcoin Wallet-->
         <div class="component-panel text-white">
-          <h3>Wallets</h3>
+          <div style="display: inline-flex; width: 100%; vertical-align: middle;">
+            <h3 style="margin-right: auto;">Wallets</h3>
+            <div class="spinner-border" id="data-loading-spinner" role="status" 
+              style="visibility: visible; size: 8px; margin-top: 2px; margin-right: 6px;">
+            </div>
+            <h5 id="total-wallet-usd-value-text" style="margin-top: 6px;">Loading data...</h5>
+          </div>
+          <br />
           <br />
           <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAssetModal">
             Add a Custom Asset

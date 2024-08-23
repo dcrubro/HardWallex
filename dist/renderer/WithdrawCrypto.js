@@ -47,10 +47,13 @@ const ecc = __importStar(require("tiny-secp256k1"));
 const Solana = __importStar(require("@solana/web3.js"));
 //@ts-expect-error
 const CommonFunctions_1 = require("../dist/renderer/CommonFunctions");
+//@ts-expect-error
+const BalanceReader_1 = require("../dist/renderer/BalanceReader");
 const jsonCustomAssets = JSON.parse((0, CommonFunctions_1.readFile)(path_1.default.join(__dirname + "/../wallets/customassets.json")));
 const sepoliaProvider = new Ethers.JsonRpcProvider("https://rpc2.sepolia.org/");
 const upperEthGasLimit = 0.00042;
 let selectedCurrency;
+let selectedAssetMaxSend = 0;
 function updateConfirmModalData() {
     //@ts-expect-error
     let sendingTo = document.getElementById("destination-address").value;
@@ -69,8 +72,58 @@ function addCustomAssetsHTML() {
     });
 }
 function setCurrency(currency) {
-    selectedCurrency = currency;
-    document.getElementById("selected-currency-text").textContent = `Selected currency: ${selectedCurrency}`;
+    return __awaiter(this, void 0, void 0, function* () {
+        selectedCurrency = currency;
+        document.getElementById("selected-currency-text").textContent = `Selected currency: ${selectedCurrency}`;
+        if (currency === "Bitcoin") {
+            let address = (0, BalanceReader_1.getWalletData)(path_1.default.join(__dirname + "/../wallets/btc_address.pem"));
+            let balance = yield (0, BalanceReader_1.getBTCWalletBalance)(address);
+            selectedAssetMaxSend = balance;
+            document.getElementById("amount-available-to-send-text").textContent = `Amount available to send: ${balance} BTC`;
+        }
+        else if (currency === "Ethereum") {
+            let address = (0, BalanceReader_1.getWalletData)(path_1.default.join(__dirname + "/../wallets/eth_address.pem"));
+            let balance = yield (0, BalanceReader_1.getETHWalletBalance)(address);
+            selectedAssetMaxSend = balance;
+            document.getElementById("amount-available-to-send-text").textContent = `Amount available to send: ${balance} ETH`;
+        }
+        else if (currency === "Solana") {
+            let address = (0, BalanceReader_1.getWalletData)(path_1.default.join(__dirname + "/../wallets/sol_address.pem"));
+            let balance = yield (0, BalanceReader_1.getSOLWalletBalance)(address);
+            selectedAssetMaxSend = balance;
+            document.getElementById("amount-available-to-send-text").textContent = `Amount available to send: ${balance} SOL`;
+        }
+        else {
+            //Probably selected a custom asset
+            let jsonCustomAssets = JSON.parse((0, CommonFunctions_1.readFile)(path_1.default.join(__dirname + "/../wallets/customassets.json")));
+            //@ts-expect-error
+            let foundSelectedAsset = jsonCustomAssets.Assets.filter(asset => asset.TokenName === currency);
+            console.log(foundSelectedAsset);
+            let address;
+            if (foundSelectedAsset[0].TokenNetwork === "Ethereum") {
+                //NOTE: This condition may fail to execute properly if the user has multiple custom assets with the same name.
+                address = yield (0, BalanceReader_1.getWalletData)(path_1.default.join(__dirname + "/../wallets/eth_address.pem"));
+                //Fetch all asset data
+                const assetEthplorerData = yield (0, BalanceReader_1.getEthplorerWalletBalance)(address);
+                const tokensOwned = assetEthplorerData.tokens ? assetEthplorerData.tokens : null;
+                if (tokensOwned !== null) {
+                    let contractAddress = foundSelectedAsset[0].TokenContractAddress.toLowerCase();
+                    for (let i = 0; i < tokensOwned.length; i++) {
+                        const t = tokensOwned[i];
+                        if (t.tokenInfo.address.toLowerCase() === contractAddress) {
+                            let balance = (t.balance / (10 ** (foundSelectedAsset[0].TokenDecimals)));
+                            document.getElementById("amount-available-to-send-text").textContent = `Amount available to send: ${balance} ${foundSelectedAsset[0].TokenSymbol}`;
+                            selectedAssetMaxSend = balance;
+                        }
+                    }
+                }
+                else {
+                    document.getElementById("amount-available-to-send-text").textContent = `Amount available to send: 0 ${foundSelectedAsset[0].TokenSymbol}`;
+                    selectedAssetMaxSend = 0;
+                }
+            }
+        }
+    });
 }
 function fetchBTCTransactionHex(txId) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -379,6 +432,12 @@ function confirmSendCrypto() {
         }, 1000);
         */
     });
+}
+function selectSendMaxAmount() {
+    if (selectedCurrency !== "" || selectedCurrency !== undefined || selectedCurrency !== null) {
+        //@ts-expect-error
+        document.getElementById("send-amount").value = selectedAssetMaxSend;
+    }
 }
 addCustomAssetsHTML();
 //Event listeners
