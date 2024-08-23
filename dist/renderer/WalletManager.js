@@ -41,123 +41,17 @@ const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const bootstrap_1 = require("bootstrap");
 const QRCode = __importStar(require("qrcode"));
-const Solana = __importStar(require("@solana/web3.js"));
 //@ts-expect-error
 const CommonFunctions_1 = require("../dist/renderer/CommonFunctions");
+//@ts-expect-error
+const BalanceReader_1 = require("../dist/renderer/BalanceReader");
 let ethBalance;
 let sepEthBalance;
 let btcBalance;
 let solBalance;
 //Functions segment
-function getEthplorerWalletBalance(address) {
-    return __awaiter(this, void 0, void 0, function* () {
-        //I know you're not supposed to leak API keys like this, but I don't really care about this one, since I got it for free.
-        const url = `https://api.ethplorer.io/getAddressInfo/${address}?apiKey=EK-kyBsC-yEYfC55-31WJm`;
-        try {
-            const response = yield fetch(url);
-            const data = yield response.json();
-            if (data) {
-                return data;
-            }
-            else {
-                console.log("Error occurred while fetching ETH Wallet balance. Please check the Ethereum address or try again later.");
-                throw new Error(data.message);
-            }
-        }
-        catch (error) {
-            console.log("Error occurred while fetching ETH Wallet balance. Please check the Ethereum address or try again later.");
-            throw error;
-        }
-    });
-}
-function getETHWalletBalance(address) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const data = yield getEthplorerWalletBalance(address);
-        return data.ETH.balance;
-    });
-}
-function getSOLWalletBalance(address) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const url = `${Solana.clusterApiUrl("mainnet-beta")}`;
-        const body = {
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "getBalance",
-            "params": [
-                address,
-                {
-                    "commitment": "confirmed"
-                }
-            ]
-        };
-        try {
-            const response = yield fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-            const data = yield response.json();
-            if (data) {
-                const solBal = data.result.value / 1e9; // Convert lamports to SOL
-                return solBal;
-            }
-            else {
-                console.log("Error occurred while fetching balance. Please check the Ethereum address or try again later.");
-                throw new Error(data.message);
-            }
-        }
-        catch (error) {
-            console.log("Error occurred while fetching balance. Please check the Ethereum address or try again later.");
-            throw error;
-        }
-    });
-}
-function getSepETHWalletBalance(address) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const url = `${localStorage.getItem("sepEtherscanBaseUrl")}/?module=account&action=balance&address=${address}&tag=latest&apikey=${localStorage.getItem("etherscanAPIkey")}`;
-        try {
-            const response = yield fetch(url);
-            const data = yield response.json();
-            if (data.status === "1") {
-                const balanceInWei = parseInt(data.result);
-                const balanceInEth = balanceInWei / 1e18; //Convert wei to Ether
-                return balanceInEth;
-            }
-            else {
-                console.log("Error occurred while fetching balance. Please check the Ethereum address or try again later.");
-                throw new Error(data.message);
-            }
-        }
-        catch (error) {
-            console.log("Error occurred while fetching balance. Please check the Ethereum address or try again later.");
-            throw error;
-        }
-    });
-}
-function getBTCWalletBalance(address) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const url = `https://api.blockcypher.com/v1/btc/main/addrs/${address}`;
-        let balance = 0;
-        try {
-            const response = yield fetch(url);
-            const data = yield response.json();
-            balance = data.balance / (10 ** 8);
-        }
-        catch (err) {
-            console.error("Error occurred while fetching balance. Please check the Bitcoin address or try again later.", err);
-            return;
-        }
-        return balance;
-    });
-}
 function getUSDValue(ownedAmount, currencyValue) {
     return ownedAmount * currencyValue;
-}
-function getWalletData(path) {
-    if (fs_1.default.existsSync(path)) {
-        const data = fs_1.default.readFileSync(path);
-        return data.toString();
-    }
-    else {
-        console.log("Error when reading wallet data (path may be invalid)");
-        return "NULL";
-    }
 }
 function drawQRCode(content, canvasId) {
     // Generate the QR code
@@ -167,18 +61,18 @@ function drawQRCode(content, canvasId) {
         }
     });
 }
-localStorage.setItem("ethAddress", getWalletData(path_1.default.join(__dirname + "/../wallets/eth_address.pem")));
-localStorage.setItem("btcAddress", getWalletData(path_1.default.join(__dirname + "/../wallets/btc_address.pem")));
-localStorage.setItem("solAddress", getWalletData(path_1.default.join(__dirname + "/../wallets/sol_address.pem")));
+localStorage.setItem("ethAddress", (0, BalanceReader_1.getWalletData)(path_1.default.join(__dirname + "/../wallets/eth_address.pem")));
+localStorage.setItem("btcAddress", (0, BalanceReader_1.getWalletData)(path_1.default.join(__dirname + "/../wallets/btc_address.pem")));
+localStorage.setItem("solAddress", (0, BalanceReader_1.getWalletData)(path_1.default.join(__dirname + "/../wallets/sol_address.pem")));
 //HTML code segment
 function setHTMLObjects() {
     return __awaiter(this, void 0, void 0, function* () {
         let totalBalance = 0;
         //On Content Load
-        ethBalance = yield getETHWalletBalance(localStorage.getItem("ethAddress").toString());
+        ethBalance = yield (0, BalanceReader_1.getETHWalletBalance)(localStorage.getItem("ethAddress").toString());
         //sepEthBalance = await getSepETHWalletBalance(localStorage.getItem("ethAddress").toString());
-        btcBalance = yield getBTCWalletBalance(localStorage.getItem("btcAddress").toString());
-        solBalance = yield getSOLWalletBalance(localStorage.getItem("solAddress").toString());
+        btcBalance = yield (0, BalanceReader_1.getBTCWalletBalance)(localStorage.getItem("btcAddress").toString());
+        solBalance = yield (0, BalanceReader_1.getSOLWalletBalance)(localStorage.getItem("solAddress").toString());
         /*ETHEREUM*/
         let ethAddr = yield localStorage.getItem("ethAddress");
         document.getElementById("ethWalletAddress").textContent = `Wallet Address: ${ethAddr}`;
@@ -287,6 +181,9 @@ function confirmAddCustomAsset() {
             document.getElementById("add-custom-asset-feedback-text").textContent = "Successfully added the custom asset!";
             document.getElementById("add-custom-asset-feedback-text").style.color = "green";
             document.getElementById("add-custom-asset-feedback-text").style.display = "block";
+            setTimeout(function () {
+                window.location.href = "./wallets.html";
+            }, 1000);
         }
     });
 }
@@ -296,7 +193,7 @@ function getCustomAssets() {
         let jsonCustomAssets = JSON.parse((0, CommonFunctions_1.readFile)(path_1.default.join(__dirname + "/../wallets/customassets.json")));
         let customAssetWalletsHTMLDiv = document.getElementById("custom-assets");
         //Fetch all asset data
-        const assetEthplorerData = yield getEthplorerWalletBalance(yield localStorage.getItem("ethAddress"));
+        const assetEthplorerData = yield (0, BalanceReader_1.getEthplorerWalletBalance)(yield localStorage.getItem("ethAddress"));
         const tokensOwned = assetEthplorerData.tokens ? assetEthplorerData.tokens : null;
         //@ts-expect-error
         jsonCustomAssets.Assets.forEach(asset => {

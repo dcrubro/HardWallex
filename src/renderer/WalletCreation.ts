@@ -197,6 +197,19 @@ function confirmImportWallet(readFromSettingsPage: boolean) {
                 readMnemonic = CryptoJS.enc.Utf8.stringify(CryptoJS.AES.decrypt(temp.replace(" (ENCRYPTED)", ""), enteredPassword));
             }
 
+            if (!BIP39.validateMnemonic(readMnemonic)) {
+                //Mnemonic phrase is invalid
+                if (!readFromSettingsPage) {
+                    document.getElementById("feedback-text").textContent = "Invalid mnemonic phrase";
+                    document.getElementById("feedback-text").style.color = "green";
+                    document.getElementById("feedback-text").style.display = "block";
+                } else {
+                    document.getElementById("feedback-text-reimport-wallet").textContent = "Invalid mnemonic phrase";
+                    document.getElementById("feedback-text-reimport-wallet").style.color = "green";
+                    document.getElementById("feedback-text-reimport-wallet").style.display = "block";
+                }
+            }
+
             //All validities passed
             let data = generateETHWallet(readMnemonic);
             

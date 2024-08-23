@@ -38,6 +38,11 @@
                 Settings
               </a>
             </li>
+            <li class="nav-item">
+              <a href="./donate.html" class="nav-link">
+                Donate
+              </a>
+            </li>
           </ul>
           <div>
             <a href="https://dcrubro.com/" target="_blank" class="nav-link active" aria-current="page">
@@ -78,10 +83,18 @@
               </div>
               <br />
               <h5 class="card-title">Send amount</h5>
-              <div class="mb-3">
+              <div class="mb-3 input-group">
                 <input class="form-control" placeholder="Send amount" id="send-amount"></input>
+                <span style="padding-left: 10px; padding-top: 0px;" class="input-group-addon">
+                  <button class="btn btn-primary" onclick="selectSendMaxAmount()">Send Max</button>
+                </span>
               </div>
 
+              <div style="display: inline-flex; width: 100%; vertical-align: middle;">
+                <h6 id="amount-available-to-send-text">Amount available to send: Please select a currency</h6>
+              </div>
+
+              <br />
               <br />
               <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#sendConfirmModal" id="updateConfirmModalData" onclick="updateConfirmModalData()">
                 Finalize
